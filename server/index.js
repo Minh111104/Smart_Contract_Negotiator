@@ -4,6 +4,9 @@ const { Server } = require('socket.io');
 const mongoose = require('mongoose');
 const cors = require('cors');
 
+const User = require('./models/User');
+const Contract = require('./models/Contract');
+
 // MongoDB connection
 mongoose.connect('mongodb://localhost:27017/contractdb');
 
@@ -53,6 +56,39 @@ app.get('/api/contracts', (req, res) => {
 
 app.get('/api/users', (req, res) => {
   res.json([{ id: 1, username: 'alice' }]);
+});
+
+// Create a new contract
+app.post('/api/contracts', async (req, res) => {
+  try {
+    const { title, content, participants } = req.body;
+    const contract = new Contract({ title, content, participants });
+    await contract.save();
+    res.status(201).json(contract);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Get all contracts
+app.get('/api/contracts', async (req, res) => {
+  try {
+    const contracts = await Contract.find().populate('participants', 'username');
+    res.json(contracts);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get a single contract by ID
+app.get('/api/contracts/:id', async (req, res) => {
+  try {
+    const contract = await Contract.findById(req.params.id).populate('participants', 'username');
+    if (!contract) return res.status(404).json({ error: 'Contract not found' });
+    res.json(contract);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Start server
