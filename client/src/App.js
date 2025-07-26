@@ -1,42 +1,41 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { setContent } from './features/editor/editorSlice';
-import socket from './socket';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import Login from './features/auth/Login';
+import Register from './features/auth/Register';
+import Dashboard from './features/dashboard/Dashboard';
+import Editor from './features/editor/Editor';
 
 function App() {
-  const dispatch = useDispatch();
-  const content = useSelector(state => state.editor.content);
-  const roomId = 'test-room-1';
-
-  useEffect(() => {
-    socket.emit('join-room', roomId);
-
-    socket.on('receive-changes', delta => {
-      dispatch(setContent(delta));
-    });
-
-    return () => {
-      socket.off('receive-changes');
-    };
-  }, [dispatch]);
-
-  const handleChange = (e) => {
-    const newValue = e.target.value;
-    dispatch(setContent(newValue));
-    socket.emit('send-changes', { roomId, delta: newValue });
-  };
-
   return (
-    <div className="App" style={{ padding: '2rem' }}>
-      <h1>Smart Contract Editor</h1>
-      <textarea
-        value={content}
-        onChange={handleChange}
-        rows={20}
-        cols={80}
-        style={{ fontFamily: 'monospace' }}
-      />
-    </div>
+    <AuthProvider>
+      <Router>
+        <div className="App">
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/editor/:contractId" 
+              element={
+                <ProtectedRoute>
+                  <Editor />
+                </ProtectedRoute>
+              } 
+            />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 
