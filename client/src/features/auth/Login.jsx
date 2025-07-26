@@ -1,10 +1,14 @@
 // client/src/features/auth/Login.jsx
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
-function Login({ onLogin }) {
+function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,8 +21,8 @@ function Login({ onLogin }) {
       });
       const data = await res.json();
       if (res.ok) {
-        localStorage.setItem('token', data.token);
-        onLogin(data.username);
+        login(data.username, data.token);
+        navigate('/dashboard');
       } else {
         setError(data.error);
       }
