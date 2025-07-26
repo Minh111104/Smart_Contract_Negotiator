@@ -1,10 +1,14 @@
 // client/src/features/auth/Register.jsx
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
-function Register({ onRegister }) {
+function Register() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const { register } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,8 +21,8 @@ function Register({ onRegister }) {
       });
       const data = await res.json();
       if (res.ok) {
-        localStorage.setItem('token', data.token);
-        onRegister(data.username);
+        register(data.username, data.token);
+        navigate('/dashboard');
       } else {
         setError(data.error);
       }
