@@ -1,6 +1,6 @@
 // client/src/features/auth/Login.jsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 function Login() {
@@ -57,7 +57,7 @@ function Login() {
         </button>
         {error && <div style={{color:'red', marginBottom: '1rem'}}>{error}</div>}
         <div style={{ textAlign: 'center' }}>
-          Don't have an account? <a href="/register">Register here</a>
+          Don't have an account? <Link to="/register">Register here</Link>
         </div>
       </form>
     </div>
