@@ -32,21 +32,35 @@ function Register() {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input
-        value={username}
-        onChange={e => setUsername(e.target.value)}
-        placeholder="Username"
-      />
-      <input
-        type="password"
-        value={password}
-        onChange={e => setPassword(e.target.value)}
-        placeholder="Password"
-      />
-      <button type="submit">Register</button>
-      {error && <div style={{color:'red'}}>{error}</div>}
-    </form>
+    <div style={{ maxWidth: '400px', margin: '100px auto', padding: '2rem' }}>
+      <h1>Register</h1>
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: '1rem' }}>
+          <input
+            value={username}
+            onChange={e => setUsername(e.target.value)}
+            placeholder="Username"
+            style={{ width: '100%', padding: '0.5rem' }}
+          />
+        </div>
+        <div style={{ marginBottom: '1rem' }}>
+          <input
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            placeholder="Password"
+            style={{ width: '100%', padding: '0.5rem' }}
+          />
+        </div>
+        <button type="submit" style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }}>
+          Register
+        </button>
+        {error && <div style={{color:'red', marginBottom: '1rem'}}>{error}</div>}
+        <div style={{ textAlign: 'center' }}>
+          Already have an account? <a href="/login">Login here</a>
+        </div>
+      </form>
+    </div>
   );
 }
 
