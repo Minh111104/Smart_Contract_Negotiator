@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -9,11 +9,7 @@ function Dashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  useEffect(() => {
-    fetchContracts();
-  }, []);
-
-  const fetchContracts = async () => {
+  const fetchContracts = useCallback(async () => {
     try {
       const res = await fetch('http://localhost:5000/api/contracts', {
         headers: {
@@ -31,7 +27,11 @@ function Dashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user.token]);
+
+  useEffect(() => {
+    fetchContracts();
+  }, [fetchContracts]);
 
   const handleLogout = () => {
     logout();

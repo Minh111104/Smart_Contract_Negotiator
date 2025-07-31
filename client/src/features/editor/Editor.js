@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
 import { setContent } from './editorSlice';
@@ -14,25 +14,7 @@ function Editor() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    // Load contract content
-    fetchContract();
-    
-    // Join socket room
-    socket.emit('join-room', contractId);
-
-    // Listen for changes from other users
-    socket.on('receive-changes', delta => {
-      dispatch(setContent(delta));
-    });
-
-    return () => {
-      socket.off('receive-changes');
-      socket.emit('leave-room', contractId);
-    };
-  }, [contractId, dispatch]);
-
-  const fetchContract = async () => {
+  const fetchContract = useCallback(async () => {
     try {
       const res = await fetch(`http://localhost:5000/api/contracts/${contractId}`, {
         headers: {
@@ -50,7 +32,25 @@ function Editor() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [contractId, user.token, dispatch]);
+
+  useEffect(() => {
+    // Load contract content
+    fetchContract();
+    
+    // Join socket room
+    socket.emit('join-room', contractId);
+
+    // Listen for changes from other users
+    socket.on('receive-changes', delta => {
+      dispatch(setContent(delta));
+    });
+
+    return () => {
+      socket.off('receive-changes');
+      socket.emit('leave-room', contractId);
+    };
+  }, [contractId, dispatch, fetchContract]);
 
   const handleChange = (e) => {
     const newValue = e.target.value;
