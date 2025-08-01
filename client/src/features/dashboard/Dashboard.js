@@ -72,6 +72,32 @@ function Dashboard() {
     }
   };
 
+  const handleDeleteContract = async (contractId, contractTitle) => {
+    if (!window.confirm(`Are you sure you want to delete "${contractTitle}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/contracts/${contractId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${user.token}`
+        }
+      });
+
+      if (res.ok) {
+        // Remove the contract from the local state
+        setContracts(prev => prev.filter(contract => contract._id !== contractId));
+        alert('Contract deleted successfully');
+      } else {
+        const errorData = await res.json();
+        setError(errorData.error || 'Failed to delete contract');
+      }
+    } catch (err) {
+      setError('Network error');
+    }
+  };
+
   // Add safety check for user object after all hooks
   if (!user || !user.token) {
     return <div>Please log in to access the dashboard.</div>;
@@ -104,9 +130,24 @@ function Dashboard() {
             <div key={contract._id} style={{ border: '1px solid #ccc', padding: '1rem', marginBottom: '1rem' }}>
               <h3>{contract.title}</h3>
               <p>Last edited: {new Date(contract.lastEdited).toLocaleDateString()}</p>
-              <button onClick={() => navigate(`/editor/${contract._id}`)}>
-                Open Editor
-              </button>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <button onClick={() => navigate(`/editor/${contract._id}`)}>
+                  Open Editor
+                </button>
+                <button 
+                  onClick={() => handleDeleteContract(contract._id, contract.title)}
+                  style={{ 
+                    backgroundColor: '#dc3545', 
+                    color: 'white', 
+                    border: 'none', 
+                    padding: '0.5rem 1rem',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
         </div>
