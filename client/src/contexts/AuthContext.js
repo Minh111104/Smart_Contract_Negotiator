@@ -16,7 +16,9 @@ export function AuthProvider({ children }) {
     if (token) {
       // You could verify the token here if needed
       // For now, we'll assume if token exists, user is logged in
-      setUser({ token });
+      // We need to get the username from localStorage as well
+      const username = localStorage.getItem('username');
+      setUser({ username, token });
     }
     setLoading(false);
   }, []);
@@ -24,16 +26,19 @@ export function AuthProvider({ children }) {
   const login = (username, token) => {
     setUser({ username, token });
     localStorage.setItem('token', token);
+    localStorage.setItem('username', username);
   };
 
   const register = (username, token) => {
     setUser({ username, token });
     localStorage.setItem('token', token);
+    localStorage.setItem('username', username);
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('token');
+    localStorage.removeItem('username');
   };
 
   const value = {

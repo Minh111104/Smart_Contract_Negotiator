@@ -10,6 +10,8 @@ function Dashboard() {
   const { user, logout } = useAuth();
 
   const fetchContracts = useCallback(async () => {
+    if (!user || !user.token) return;
+    
     try {
       const res = await fetch('http://localhost:5000/api/contracts', {
         headers: {
@@ -27,11 +29,15 @@ function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [user.token]);
+  }, [user?.token]);
 
   useEffect(() => {
-    fetchContracts();
-  }, [fetchContracts]);
+    if (user && user.token) {
+      fetchContracts();
+    } else {
+      setLoading(false);
+    }
+  }, [fetchContracts, user]);
 
   const handleLogout = () => {
     logout();
@@ -39,6 +45,8 @@ function Dashboard() {
   };
 
   const createNewContract = async () => {
+    if (!user || !user.token) return;
+    
     try {
       const res = await fetch('http://localhost:5000/api/contracts', {
         method: 'POST',
@@ -61,6 +69,11 @@ function Dashboard() {
     }
   };
 
+  // Add safety check for user object after all hooks
+  if (!user || !user.token) {
+    return <div>Please log in to access the dashboard.</div>;
+  }
+
   if (loading) return <div>Loading...</div>;
 
   return (
@@ -68,7 +81,7 @@ function Dashboard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h1>Dashboard</h1>
         <div>
-          <span>Welcome, {user.username}!</span>
+          <span>Welcome, {user.username || 'User'}!</span>
           <button onClick={handleLogout} style={{ marginLeft: '1rem' }}>Logout</button>
         </div>
       </div>
