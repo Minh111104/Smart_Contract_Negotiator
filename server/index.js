@@ -34,9 +34,14 @@ const io = new Server(server, {
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
 
-  socket.on('join-room', (roomId) => {
+  socket.on('join-room', ({ roomId, username }) => {
     socket.join(roomId);
-    console.log(`Socket ${socket.id} joined room ${roomId}`);
+    socket.roomId = roomId;
+    socket.username = username;
+    console.log(`Socket ${socket.id} (${username}) joined room ${roomId}`);
+    
+    // Notify others in the room
+    socket.to(roomId).emit('user-joined', { username, socketId: socket.id });
   });
 
   socket.on('send-changes', async ({ roomId, delta }) => {
@@ -54,7 +59,21 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('cursor-move', ({ roomId, position, username }) => {
+    socket.to(roomId).emit('cursor-update', { 
+      socketId: socket.id, 
+      position, 
+      username 
+    });
+  });
+
   socket.on('disconnect', () => {
+    if (socket.roomId) {
+      socket.to(socket.roomId).emit('user-left', { 
+        username: socket.username, 
+        socketId: socket.id 
+      });
+    }
     console.log('A user disconnected:', socket.id);
   });
 });
@@ -196,6 +215,75 @@ app.put('/api/contracts/:id', authMiddleware, async (req, res) => {
     await contract.save();
     
     res.json(contract);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Share contract with another user
+app.post('/api/contracts/:id/share', authMiddleware, async (req, res) => {
+  try {
+    const { username } = req.body;
+    const contract = await Contract.findById(req.params.id);
+    
+    if (!contract) {
+      return res.status(404).json({ error: 'Contract not found' });
+    }
+    
+    // Check if user is a participant
+    const isParticipant = contract.participants.some(p => {
+      const participantId = p._id ? p._id.toString() : p.toString();
+      return participantId === req.user._id.toString();
+    });
+    
+    if (!isParticipant) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    // Find the user to share with
+    const userToShare = await User.findOne({ username });
+    if (!userToShare) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Check if user is already a participant
+    if (contract.participants.some(p => p.toString() === userToShare._id.toString())) {
+      return res.status(400).json({ error: 'User is already a participant' });
+    }
+    
+    // Add user to participants
+    contract.participants.push(userToShare._id);
+    await contract.save();
+    
+    res.json({ message: `Contract shared with ${username}` });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete contract
+app.delete('/api/contracts/:id', authMiddleware, async (req, res) => {
+  try {
+    const contract = await Contract.findById(req.params.id);
+    
+    if (!contract) {
+      return res.status(404).json({ error: 'Contract not found' });
+    }
+    
+    // Check if user is a participant
+    const isParticipant = contract.participants.some(p => {
+      const participantId = p._id ? p._id.toString() : p.toString();
+      return participantId === req.user._id.toString();
+    });
+    
+    if (!isParticipant) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    // Delete the contract
+    await Contract.findByIdAndDelete(req.params.id);
+    
+    res.json({ message: 'Contract deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
