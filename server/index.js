@@ -156,8 +156,13 @@ app.get('/api/contracts/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Contract not found' });
     }
     
-    // Check if user is a participant
-    if (!contract.participants.some(p => p._id.toString() === req.user._id.toString())) {
+    // Check if user is a participant - handle both ObjectId and populated User objects
+    const isParticipant = contract.participants.some(p => {
+      const participantId = p._id ? p._id.toString() : p.toString();
+      return participantId === req.user._id.toString();
+    });
+    
+    if (!isParticipant) {
       return res.status(403).json({ error: 'Access denied' });
     }
     
@@ -176,8 +181,13 @@ app.put('/api/contracts/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Contract not found' });
     }
     
-    // Check if user is a participant
-    if (!contract.participants.some(p => p.toString() === req.user._id.toString())) {
+    // Check if user is a participant - handle both ObjectId and populated User objects
+    const isParticipant = contract.participants.some(p => {
+      const participantId = p._id ? p._id.toString() : p.toString();
+      return participantId === req.user._id.toString();
+    });
+    
+    if (!isParticipant) {
       return res.status(403).json({ error: 'Access denied' });
     }
     

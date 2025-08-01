@@ -56,13 +56,16 @@ function Dashboard() {
         },
         body: JSON.stringify({
           title: 'New Contract',
-          content: '',
-          participants: []
+          content: ''
         })
       });
+      
       if (res.ok) {
         const newContract = await res.json();
         navigate(`/editor/${newContract._id}`);
+      } else {
+        const errorData = await res.json();
+        setError(`Failed to create contract: ${errorData.error || 'Unknown error'}`);
       }
     } catch (err) {
       setError('Failed to create contract');

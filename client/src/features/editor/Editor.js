@@ -21,11 +21,13 @@ function Editor() {
           'Authorization': `Bearer ${user.token}`
         }
       });
+      
       if (res.ok) {
         const contract = await res.json();
-        dispatch(setContent(contract.content));
+        dispatch(setContent(contract.content || ''));
       } else {
-        setError('Failed to load contract');
+        const errorData = await res.json();
+        setError(`Failed to load contract: ${errorData.error || 'Unknown error'}`);
       }
     } catch (err) {
       setError('Network error');
