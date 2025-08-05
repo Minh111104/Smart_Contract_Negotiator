@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { exportContractToPDF, exportContractAsText } from '../../utils/pdfExport';
 
 function Dashboard() {
   const [contracts, setContracts] = useState([]);
@@ -98,6 +99,28 @@ function Dashboard() {
     }
   };
 
+  const handleExportContract = async (contract) => {
+    const exportType = window.confirm('Export as PDF? Click OK for PDF, Cancel for Text file.') ? 'pdf' : 'text';
+    
+    try {
+      let result;
+      
+      if (exportType === 'pdf') {
+        result = await exportContractToPDF(contract.title, contract.content, contract.participants);
+      } else {
+        result = exportContractAsText(contract.title, contract.content);
+      }
+      
+      if (result.success) {
+        alert(`${exportType.toUpperCase()} exported successfully!`);
+      } else {
+        alert(`Export failed: ${result.error}`);
+      }
+    } catch (error) {
+      alert(`Export failed: ${error.message}`);
+    }
+  };
+
   // Add safety check for user object after all hooks
   if (!user || !user.token) {
     return <div>Please log in to access the dashboard.</div>;
@@ -133,6 +156,19 @@ function Dashboard() {
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                 <button onClick={() => navigate(`/editor/${contract._id}`)}>
                   Open Editor
+                </button>
+                <button 
+                  onClick={() => handleExportContract(contract)}
+                  style={{ 
+                    backgroundColor: '#28a745', 
+                    color: 'white', 
+                    border: 'none', 
+                    padding: '0.5rem 1rem',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Export
                 </button>
                 <button 
                   onClick={() => handleDeleteContract(contract._id, contract.title)}

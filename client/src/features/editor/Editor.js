@@ -7,6 +7,7 @@ import socket from '../../socket';
 import UserPresence from '../../components/UserPresence';
 import useDebounce from '../../hooks/useDebounce';
 import ShareContract from '../../components/ShareContract';
+import ExportOptions from '../../components/ExportOptions';
 
 function Editor() {
   const dispatch = useDispatch();
@@ -19,6 +20,8 @@ function Editor() {
   const [activeUsers, setActiveUsers] = useState([]);
   const [saveStatus, setSaveStatus] = useState('saved'); // 'saved', 'saving', 'error'
   const [showShare, setShowShare] = useState(false);
+  const [showExport, setShowExport] = useState(false);
+  const [contractData, setContractData] = useState({ title: '', participants: [] });
 
   const fetchContract = useCallback(async () => {
     try {
@@ -31,6 +34,10 @@ function Editor() {
       if (res.ok) {
         const contract = await res.json();
         dispatch(setContent(contract.content || ''));
+        setContractData({
+          title: contract.title,
+          participants: contract.participants || []
+        });
       } else {
         const errorData = await res.json();
         setError(`Failed to load contract: ${errorData.error || 'Unknown error'}`);
@@ -160,6 +167,20 @@ function Editor() {
             {showShare ? 'Hide Share' : 'Share'}
           </button>
           <button 
+            onClick={() => setShowExport(!showExport)}
+            style={{ 
+              marginRight: '1rem',
+              backgroundColor: '#28a745', 
+              color: 'white', 
+              border: 'none', 
+              padding: '0.5rem 1rem',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Export
+          </button>
+          <button 
             onClick={handleDeleteContract}
             style={{ 
               marginRight: '1rem',
@@ -190,6 +211,15 @@ function Editor() {
         <ShareContract 
           contractId={contractId} 
           onShare={() => setShowShare(false)}
+        />
+      )}
+      
+      {showExport && (
+        <ExportOptions 
+          contractTitle={contractData.title}
+          contractContent={content}
+          participants={contractData.participants}
+          onClose={() => setShowExport(false)}
         />
       )}
     </div>
