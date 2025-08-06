@@ -8,6 +8,8 @@ import UserPresence from '../../components/UserPresence';
 import useDebounce from '../../hooks/useDebounce';
 import ShareContract from '../../components/ShareContract';
 import ExportOptions from '../../components/ExportOptions';
+import CursorTracker from '../../components/CursorTracker';
+import TypingIndicator from '../../components/TypingIndicator';
 
 function Editor() {
   const dispatch = useDispatch();
@@ -22,6 +24,8 @@ function Editor() {
   const [showShare, setShowShare] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [contractData, setContractData] = useState({ title: '', participants: [] });
+  const [textareaRef, setTextareaRef] = useState(null);
+  const [isTyping, setIsTyping] = useState(false);
 
   const fetchContract = useCallback(async () => {
     try {
@@ -56,6 +60,10 @@ function Editor() {
     // Join socket room with username
     socket.emit('join-room', { roomId: contractId, username: user.username });
 
+    // Store socket and room info globally for cursor tracking
+    window.socket = socket;
+    window.currentRoomId = contractId;
+
     // Listen for changes from other users
     socket.on('receive-changes', delta => {
       dispatch(setContent(delta));
@@ -79,6 +87,8 @@ function Editor() {
       socket.off('user-joined');
       socket.off('user-left');
       socket.emit('leave-room', contractId);
+      delete window.socket;
+      delete window.currentRoomId;
     };
   }, [contractId, dispatch, fetchContract, user.username]);
 
@@ -86,6 +96,18 @@ function Editor() {
     const newValue = e.target.value;
     dispatch(setContent(newValue));
     socket.emit('send-changes', { roomId: contractId, delta: newValue });
+    
+    // Emit typing indicators
+    if (!isTyping) {
+      setIsTyping(true);
+      socket.emit('typing-start', { roomId: contractId, username: user.username });
+      
+      // Stop typing indicator after 2 seconds of no input
+      setTimeout(() => {
+        setIsTyping(false);
+        socket.emit('typing-stop', { roomId: contractId, username: user.username });
+      }, 2000);
+    }
   };
 
   const saveContract = useCallback(async () => {
@@ -151,6 +173,8 @@ function Editor() {
   return (
     <div style={{ padding: '2rem' }}>
       <UserPresence users={activeUsers} />
+      <TypingIndicator activeUsers={activeUsers} currentUser={user} />
+      
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h1>Contract Editor</h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -198,14 +222,25 @@ function Editor() {
         </div>
       </div>
       
-      <textarea
-        value={content}
-        onChange={handleChange}
-        rows={20}
-        cols={80}
-        style={{ fontFamily: 'monospace', width: '100%' }}
-        placeholder="Start typing your contract..."
-      />
+      <div style={{ position: 'relative' }}>
+        <textarea
+          ref={setTextareaRef}
+          value={content}
+          onChange={handleChange}
+          rows={20}
+          cols={80}
+          style={{ fontFamily: 'monospace', width: '100%' }}
+          placeholder="Start typing your contract..."
+        />
+        
+        {textareaRef && (
+          <CursorTracker 
+            textareaRef={textareaRef}
+            activeUsers={activeUsers}
+            currentUser={user}
+          />
+        )}
+      </div>
       
       {showShare && (
         <ShareContract 
