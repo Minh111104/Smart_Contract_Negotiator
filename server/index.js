@@ -67,6 +67,22 @@ io.on('connection', (socket) => {
     });
   });
 
+  socket.on('typing-start', ({ roomId, username }) => {
+    socket.to(roomId).emit('user-typing', { 
+      socketId: socket.id, 
+      username, 
+      isTyping: true 
+    });
+  });
+
+  socket.on('typing-stop', ({ roomId, username }) => {
+    socket.to(roomId).emit('user-typing', { 
+      socketId: socket.id, 
+      username, 
+      isTyping: false 
+    });
+  });
+
   socket.on('disconnect', () => {
     if (socket.roomId) {
       socket.to(socket.roomId).emit('user-left', { 
