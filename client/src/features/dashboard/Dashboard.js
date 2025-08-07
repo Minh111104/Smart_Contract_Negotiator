@@ -2,11 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { exportContractToPDF, exportContractAsText } from '../../utils/pdfExport';
+import TemplateSelector from '../../components/TemplateSelector';
 
 function Dashboard() {
   const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showTemplates, setShowTemplates] = useState(false);
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
@@ -45,7 +47,7 @@ function Dashboard() {
     navigate('/login');
   };
 
-  const createNewContract = async () => {
+  const createNewContract = async (template = null) => {
     if (!user || !user.token) return;
     
     try {
@@ -56,8 +58,8 @@ function Dashboard() {
           'Authorization': `Bearer ${user.token}`
         },
         body: JSON.stringify({
-          title: 'New Contract',
-          content: ''
+          title: template ? template.title : 'New Contract',
+          content: template ? template.content : ''
         })
       });
       
@@ -71,6 +73,10 @@ function Dashboard() {
     } catch (err) {
       setError('Failed to create contract');
     }
+  };
+
+  const handleTemplateSelect = (template) => {
+    createNewContract(template);
   };
 
   const handleDeleteContract = async (contractId, contractTitle) => {
@@ -138,9 +144,31 @@ function Dashboard() {
         </div>
       </div>
 
-      <button onClick={createNewContract} style={{ marginBottom: '2rem' }}>
-        Create New Contract
-      </button>
+      <div style={{ marginBottom: '2rem', display: 'flex', gap: '1rem' }}>
+        <button onClick={() => createNewContract()} style={{ marginRight: '1rem' }}>
+          Create New Contract
+        </button>
+        <button 
+          onClick={() => setShowTemplates(!showTemplates)}
+          style={{ 
+            backgroundColor: '#17a2b8', 
+            color: 'white', 
+            border: 'none', 
+            padding: '0.5rem 1rem',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          {showTemplates ? 'Hide Templates' : 'Use Template'}
+        </button>
+      </div>
+
+      {showTemplates && (
+        <TemplateSelector 
+          onSelectTemplate={handleTemplateSelect}
+          onClose={() => setShowTemplates(false)}
+        />
+      )}
 
       {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
 
