@@ -10,6 +10,7 @@ import ShareContract from '../../components/ShareContract';
 import ExportOptions from '../../components/ExportOptions';
 import CursorTracker from '../../components/CursorTracker';
 import TypingIndicator from '../../components/TypingIndicator';
+import AIClauseSuggestions from '../../components/AIClauseSuggestions';
 
 function Editor() {
   const dispatch = useDispatch();
@@ -23,6 +24,7 @@ function Editor() {
   const [saveStatus, setSaveStatus] = useState('saved'); // 'saved', 'saving', 'error'
   const [showShare, setShowShare] = useState(false);
   const [showExport, setShowExport] = useState(false);
+  const [showAISuggestions, setShowAISuggestions] = useState(false);
   const [contractData, setContractData] = useState({ title: '', participants: [] });
   const [textareaRef, setTextareaRef] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
@@ -167,6 +169,12 @@ function Editor() {
     }
   };
 
+  const handleInsertClause = (clause) => {
+    const newContent = content + '\n\n' + clause;
+    dispatch(setContent(newContent));
+    socket.emit('send-changes', { roomId: contractId, delta: newContent });
+  };
+
   if (loading) return <div>Loading contract...</div>;
   if (error) return <div style={{ color: 'red' }}>{error}</div>;
 
@@ -189,6 +197,20 @@ function Editor() {
           <button onClick={handleSave} style={{ marginRight: '1rem' }}>Save</button>
           <button onClick={() => setShowShare(!showShare)} style={{ marginRight: '1rem' }}>
             {showShare ? 'Hide Share' : 'Share'}
+          </button>
+          <button 
+            onClick={() => setShowAISuggestions(!showAISuggestions)}
+            style={{ 
+              marginRight: '1rem',
+              backgroundColor: '#ffc107', 
+              color: 'black', 
+              border: 'none', 
+              padding: '0.5rem 1rem',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            {showAISuggestions ? 'Hide AI' : 'AI Suggestions'}
           </button>
           <button 
             onClick={() => setShowExport(!showExport)}
@@ -246,6 +268,13 @@ function Editor() {
         <ShareContract 
           contractId={contractId} 
           onShare={() => setShowShare(false)}
+        />
+      )}
+      
+      {showAISuggestions && (
+        <AIClauseSuggestions 
+          currentContent={content}
+          onInsertClause={handleInsertClause}
         />
       )}
       
