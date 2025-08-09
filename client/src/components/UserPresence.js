@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
 function UserPresence({ users }) {
   if (!users || users.length === 0) {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { contractTemplates, getTemplatesByCategory } from '../data/contractTemplates';
+import { contractTemplates } from '../data/contractTemplates';
 
 function TemplateSelector({ onSelectTemplate, onClose }) {
   const [selectedCategory, setSelectedCategory] = useState('All');

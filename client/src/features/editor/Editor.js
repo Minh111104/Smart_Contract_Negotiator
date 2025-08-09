@@ -8,9 +8,10 @@ import UserPresence from '../../components/UserPresence';
 import useDebounce from '../../hooks/useDebounce';
 import ShareContract from '../../components/ShareContract';
 import ExportOptions from '../../components/ExportOptions';
-import CursorTracker from '../../components/CursorTracker';
+
 import TypingIndicator from '../../components/TypingIndicator';
 import AIClauseSuggestions from '../../components/AIClauseSuggestions';
+import RichTextEditor from '../../components/RichTextEditor';
 
 function Editor() {
   const dispatch = useDispatch();
@@ -26,7 +27,7 @@ function Editor() {
   const [showExport, setShowExport] = useState(false);
   const [showAISuggestions, setShowAISuggestions] = useState(false);
   const [contractData, setContractData] = useState({ title: '', participants: [] });
-  const [textareaRef, setTextareaRef] = useState(null);
+
   const [isTyping, setIsTyping] = useState(false);
 
   const fetchContract = useCallback(async () => {
@@ -94,8 +95,7 @@ function Editor() {
     };
   }, [contractId, dispatch, fetchContract, user.username]);
 
-  const handleChange = (e) => {
-    const newValue = e.target.value;
+  const handleChange = (newValue) => {
     dispatch(setContent(newValue));
     socket.emit('send-changes', { roomId: contractId, delta: newValue });
     
@@ -170,7 +170,7 @@ function Editor() {
   };
 
   const handleInsertClause = (clause) => {
-    const newContent = content + '\n\n' + clause;
+    const newContent = content + '<br><br>' + clause;
     dispatch(setContent(newContent));
     socket.emit('send-changes', { roomId: contractId, delta: newContent });
   };
@@ -245,23 +245,11 @@ function Editor() {
       </div>
       
       <div style={{ position: 'relative' }}>
-        <textarea
-          ref={setTextareaRef}
+        <RichTextEditor
           value={content}
           onChange={handleChange}
-          rows={20}
-          cols={80}
-          style={{ fontFamily: 'monospace', width: '100%' }}
           placeholder="Start typing your contract..."
         />
-        
-        {textareaRef && (
-          <CursorTracker 
-            textareaRef={textareaRef}
-            activeUsers={activeUsers}
-            currentUser={user}
-          />
-        )}
       </div>
       
       {showShare && (

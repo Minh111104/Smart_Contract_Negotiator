@@ -1,0 +1,88 @@
+.rich-text-editor {
+  margin: 1rem 0;
+}
+
+.rich-text-editor .ql-container {
+  border: 1px solid #ccc;
+  border-radius: 0 0 4px 4px;
+  border-top: none;
+  min-height: 400px;
+}
+
+.rich-text-editor .ql-toolbar {
+  border: 1px solid #ccc;
+  border-radius: 4px 4px 0 0;
+  background-color: #f8f9fa;
+  padding: 8px;
+}
+
+.rich-text-editor .ql-editor {
+  min-height: 400px;
+  font-size: 14px;
+  line-height: 1.6;
+  font-family: Georgia, "Times New Roman", serif;
+  padding: 16px;
+}
+
+.rich-text-editor .ql-editor p {
+  margin-bottom: 1rem;
+}
+
+.rich-text-editor .ql-editor h1,
+.rich-text-editor .ql-editor h2,
+.rich-text-editor .ql-editor h3,
+.rich-text-editor .ql-editor h4,
+.rich-text-editor .ql-editor h5,
+.rich-text-editor .ql-editor h6 {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.rich-text-editor .ql-editor ul,
+.rich-text-editor .ql-editor ol {
+  margin-bottom: 1rem;
+  padding-left: 2rem;
+}
+
+.rich-text-editor .ql-editor blockquote {
+  border-left: 4px solid #ccc;
+  margin: 1rem 0;
+  padding-left: 1rem;
+  font-style: italic;
+  color: #666;
+}
+
+.rich-text-editor .ql-editor a {
+  color: #007bff;
+  text-decoration: underline;
+}
+
+.rich-text-editor .ql-editor a:hover {
+  color: #0056b3;
+}
+
+/* Custom toolbar button styles */
+.rich-text-editor .ql-toolbar button {
+  margin-right: 2px;
+}
+
+.rich-text-editor .ql-toolbar button:hover {
+  color: #007bff;
+}
+
+.rich-text-editor .ql-toolbar .ql-active {
+  color: #007bff;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .rich-text-editor .ql-toolbar {
+    padding: 4px;
+  }
+  
+  .rich-text-editor .ql-editor {
+    padding: 12px;
+    font-size: 13px;
+  }
+}
