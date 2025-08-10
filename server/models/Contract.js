@@ -16,6 +16,10 @@ const ContractSchema = new mongoose.Schema({
   lastEdited: { 
     type: Date, 
     default: Date.now 
+  },
+  currentVersion: {
+    type: Number,
+    default: 1
   }
 }, {
   timestamps: true

@@ -43,6 +43,7 @@ export function AuthProvider({ children }) {
 
   const value = {
     user,
+    token: user?.token, // Add token to context value
     login,
     register,
     logout,
