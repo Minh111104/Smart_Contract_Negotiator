@@ -4,8 +4,6 @@ import { generateSimpleDiff, formatDiffForDisplay } from '../utils/diffUtils';
 import './VersionHistory.css';
 
 const VersionHistory = ({ contractId, onClose, refreshKey }) => {
-  console.log('VersionHistory component rendered with:', { contractId, refreshKey });
-  
   const [versions, setVersions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedVersion, setSelectedVersion] = useState(null);
@@ -13,17 +11,8 @@ const VersionHistory = ({ contractId, onClose, refreshKey }) => {
   const [diffResult, setDiffResult] = useState(null);
   const { token } = useAuth();
 
-  // Debug: Monitor versions state changes
-  useEffect(() => {
-    console.log('Versions state changed:', versions);
-  }, [versions]);
-
   const fetchVersions = useCallback(async () => {
     try {
-      console.log('Fetching versions for contract:', contractId);
-      console.log('Using token:', token ? 'Token exists' : 'No token');
-      console.log('Current refreshKey:', refreshKey);
-      
       setLoading(true);
       
       const response = await fetch(`http://localhost:5000/api/contracts/${contractId}/versions`, {
@@ -32,12 +21,8 @@ const VersionHistory = ({ contractId, onClose, refreshKey }) => {
         }
       });
       
-      console.log('Response status:', response.status);
-      
       if (response.ok) {
         const data = await response.json();
-        console.log('Versions data received:', data);
-        console.log('Setting versions state with:', data.length, 'versions');
         setVersions(data);
       } else {
         const errorData = await response.text();
@@ -51,13 +36,11 @@ const VersionHistory = ({ contractId, onClose, refreshKey }) => {
   }, [contractId, token, refreshKey]);
 
   useEffect(() => {
-    console.log('VersionHistory useEffect triggered with refreshKey:', refreshKey);
     fetchVersions();
-  }, [fetchVersions]); // Now depends on fetchVersions which includes all necessary deps
+  }, [fetchVersions]);
 
   // Add manual refresh function
   const handleManualRefresh = () => {
-    console.log('Manual refresh triggered');
     fetchVersions();
   };
 
