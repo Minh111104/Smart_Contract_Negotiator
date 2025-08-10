@@ -1,0 +1,253 @@
+.version-history-modal {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.version-history-content {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  max-width: 1024px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.version-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.version-history-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.version-history-close {
+  color: #6b7280;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.version-history-close:hover {
+  color: #374151;
+}
+
+.version-history-body {
+  display: flex;
+  height: calc(90vh - 120px);
+}
+
+.version-list {
+  width: 33.333333%;
+  border-right: 1px solid #e5e7eb;
+  overflow-y: auto;
+}
+
+.version-list-content {
+  padding: 1rem;
+}
+
+.version-list-title {
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.75rem;
+}
+
+.version-item {
+  padding: 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid #d1d5db;
+  transition: all 0.2s;
+  margin-bottom: 0.5rem;
+}
+
+.version-item:hover {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.version-item.selected {
+  background-color: #eff6ff;
+  border-color: #93c5fd;
+}
+
+.version-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.version-number {
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.version-description {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.version-date {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.version-author {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
+
+.version-content {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.version-content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.version-content-title {
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+
+.version-content-meta {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.diff-button {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.diff-button.enabled {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+.diff-button.enabled:hover {
+  background-color: #bfdbfe;
+}
+
+.diff-button.disabled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.diff-content {
+  background-color: #f9fafb;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.diff-title {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.diff-added {
+  margin-bottom: 0.5rem;
+}
+
+.diff-removed {
+  margin-bottom: 0.5rem;
+}
+
+.diff-stats {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.text-green-600 {
+  color: #059669;
+}
+
+.text-red-600 {
+  color: #dc2626;
+}
+
+.prose {
+  max-width: none;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.prose p {
+  margin-bottom: 0.5rem;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.prose ul, .prose ol {
+  margin-bottom: 0.5rem;
+  padding-left: 1.5rem;
+}
+
+.prose li {
+  margin-bottom: 0.25rem;
+}
+
+.no-versions {
+  text-align: center;
+  color: #6b7280;
+  margin-top: 2rem;
+}
+
+.select-version {
+  text-align: center;
+  color: #6b7280;
+  margin-top: 2rem;
+}
+
+.loading-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: #3b82f6;
+  height: 2rem;
+  width: 2rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  margin-top: 0.5rem;
+  color: #6b7280;
+}
