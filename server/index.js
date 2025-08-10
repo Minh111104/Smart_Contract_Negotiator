@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken');
 
 const User = require('./models/User');
 const Contract = require('./models/Contract');
+const ContractVersion = require('./models/ContractVersion');
 const authMiddleware = require('./middleware/auth');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key_change_in_production';
@@ -34,10 +35,11 @@ const io = new Server(server, {
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
 
-  socket.on('join-room', ({ roomId, username }) => {
+  socket.on('join-room', ({ roomId, username, userId }) => {
     socket.join(roomId);
     socket.roomId = roomId;
     socket.username = username;
+    socket.userId = userId;
     console.log(`Socket ${socket.id} (${username}) joined room ${roomId}`);
     
     // Notify others in the room
@@ -50,10 +52,29 @@ io.on('connection', (socket) => {
     
     // Update the contract in the database
     try {
-      await Contract.findByIdAndUpdate(roomId, { 
-        content: delta,
-        lastEdited: new Date()
-      });
+      const contract = await Contract.findById(roomId);
+      if (contract) {
+        contract.content = delta;
+        contract.lastEdited = new Date();
+        await contract.save();
+        
+        // Create a new version every 10 changes (you can adjust this threshold)
+        if (contract.currentVersion % 10 === 0) {
+          const newVersion = new ContractVersion({
+            contractId: roomId,
+            version: contract.currentVersion + 1,
+            content: delta,
+            title: contract.title,
+            createdBy: socket.userId || 'unknown',
+            changeDescription: 'Auto-saved version',
+            participants: contract.participants
+          });
+          await newVersion.save();
+          
+          contract.currentVersion = newVersion.version;
+          await contract.save();
+        }
+      }
     } catch (error) {
       console.error('Error updating contract:', error);
     }
@@ -300,6 +321,116 @@ app.delete('/api/contracts/:id', authMiddleware, async (req, res) => {
     await Contract.findByIdAndDelete(req.params.id);
     
     res.json({ message: 'Contract deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- Version History routes ---
+app.get('/api/contracts/:id/versions', authMiddleware, async (req, res) => {
+  try {
+    const contract = await Contract.findById(req.params.id);
+    
+    if (!contract) {
+      return res.status(404).json({ error: 'Contract not found' });
+    }
+    
+    // Check if user is a participant
+    const isParticipant = contract.participants.some(p => {
+      const participantId = p._id ? p._id.toString() : p.toString();
+      return participantId === req.user._id.toString();
+    });
+    
+    if (!isParticipant) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    const versions = await ContractVersion.find({ contractId: req.params.id })
+      .populate('createdBy', 'username')
+      .sort({ version: -1 });
+    
+    res.json(versions);
+  } catch (err) {
+    console.error('Error fetching versions:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/contracts/:id/versions', authMiddleware, async (req, res) => {
+  try {
+    const { content, title, changeDescription } = req.body;
+    
+    const contract = await Contract.findById(req.params.id);
+    
+    if (!contract) {
+      return res.status(404).json({ error: 'Contract not found' });
+    }
+    
+    // Check if user is a participant
+    const isParticipant = contract.participants.some(p => {
+      const participantId = p._id ? p._id.toString() : p.toString();
+      return participantId === req.user._id.toString();
+    });
+    
+    if (!isParticipant) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    // Ensure currentVersion exists, default to 1 if not
+    const currentVersion = contract.currentVersion || 1;
+    
+    // Create new version
+    const newVersion = new ContractVersion({
+      contractId: req.params.id,
+      version: currentVersion + 1,
+      content: content || contract.content,
+      title: title || contract.title,
+      createdBy: req.user._id,
+      changeDescription: changeDescription || 'Auto-saved version',
+      participants: contract.participants
+    });
+    
+    await newVersion.save();
+    
+    // Update contract's current version
+    contract.currentVersion = newVersion.version;
+    await contract.save();
+    
+    res.status(201).json(newVersion);
+  } catch (err) {
+    console.error('Error creating version:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/contracts/:id/versions/:versionId', authMiddleware, async (req, res) => {
+  try {
+    const contract = await Contract.findById(req.params.id);
+    
+    if (!contract) {
+      return res.status(404).json({ error: 'Contract not found' });
+    }
+    
+    // Check if user is a participant
+    const isParticipant = contract.participants.some(p => {
+      const participantId = p._id ? p._id.toString() : p.toString();
+      return participantId === req.user._id.toString();
+    });
+    
+    if (!isParticipant) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    const version = await ContractVersion.findOne({
+      contractId: req.params.id,
+      version: req.params.versionId
+    }).populate('createdBy', 'username');
+    
+    if (!version) {
+      return res.status(404).json({ error: 'Version not found' });
+    }
+    
+    res.json(version);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
