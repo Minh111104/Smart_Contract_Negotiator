@@ -12,6 +12,7 @@ import ExportOptions from '../../components/ExportOptions';
 import TypingIndicator from '../../components/TypingIndicator';
 import AIClauseSuggestions from '../../components/AIClauseSuggestions';
 import RichTextEditor from '../../components/RichTextEditor';
+import VersionHistory from '../../components/VersionHistory';
 
 function Editor() {
   const dispatch = useDispatch();
@@ -26,6 +27,8 @@ function Editor() {
   const [showShare, setShowShare] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [showAISuggestions, setShowAISuggestions] = useState(false);
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0); // Add refresh key for version history
   const [contractData, setContractData] = useState({ title: '', participants: [] });
 
   const [isTyping, setIsTyping] = useState(false);
@@ -61,7 +64,7 @@ function Editor() {
     fetchContract();
     
     // Join socket room with username
-    socket.emit('join-room', { roomId: contractId, username: user.username });
+    socket.emit('join-room', { roomId: contractId, username: user.username, userId: user._id });
 
     // Store socket and room info globally for cursor tracking
     window.socket = socket;
@@ -175,6 +178,61 @@ function Editor() {
     socket.emit('send-changes', { roomId: contractId, delta: newContent });
   };
 
+  const handleSaveTitle = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/contracts/${contractId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
+        },
+        body: JSON.stringify({
+          title: contractData.title,
+          content: content
+        })
+      });
+      
+      if (response.ok) {
+        console.log('Title updated successfully');
+      } else {
+        console.error('Failed to update title');
+      }
+    } catch (error) {
+      console.error('Error updating title:', error);
+    }
+  };
+
+  const handleCreateVersion = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/contracts/${contractId}/versions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
+        },
+        body: JSON.stringify({
+          content: content,
+          title: contractData.title,
+          changeDescription: 'Manual version created'
+        })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        alert('Version created successfully!');
+        const newRefreshKey = refreshKey + 1;
+        setRefreshKey(newRefreshKey); // Trigger refresh for version history
+      } else {
+        const errorData = await response.text();
+        console.error('Failed to create version:', response.status, errorData);
+        alert('Failed to create version');
+      }
+    } catch (error) {
+      console.error('Error creating version:', error);
+      alert('Error creating version');
+    }
+  };
+
   if (loading) return <div>Loading contract...</div>;
   if (error) return <div style={{ color: 'red' }}>{error}</div>;
 
@@ -184,7 +242,25 @@ function Editor() {
       <TypingIndicator activeUsers={activeUsers} currentUser={user} />
       
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1>Contract Editor</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <h1>Contract Editor</h1>
+          <input
+            type="text"
+            value={contractData.title}
+            onChange={(e) => setContractData(prev => ({ ...prev, title: e.target.value }))}
+            onBlur={handleSaveTitle}
+            style={{
+              fontSize: '1.5rem',
+              fontWeight: 'bold',
+              border: 'none',
+              borderBottom: '2px solid #e2e8f0',
+              padding: '0.5rem',
+              backgroundColor: 'transparent',
+              outline: 'none'
+            }}
+            placeholder="Contract Title"
+          />
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{ 
             fontSize: '12px', 
@@ -225,6 +301,34 @@ function Editor() {
             }}
           >
             Export
+          </button>
+          <button 
+            onClick={() => setShowVersionHistory(!showVersionHistory)}
+            style={{ 
+              marginRight: '1rem',
+              backgroundColor: '#6f42c1', 
+              color: 'white', 
+              border: 'none', 
+              padding: '0.5rem 1rem',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Version History
+          </button>
+          <button 
+            onClick={handleCreateVersion}
+            style={{ 
+              marginRight: '1rem',
+              backgroundColor: '#17a2b8', 
+              color: 'white', 
+              border: 'none', 
+              padding: '0.5rem 1rem',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Create Version
           </button>
           <button 
             onClick={handleDeleteContract}
@@ -274,6 +378,15 @@ function Editor() {
           onClose={() => setShowExport(false)}
         />
       )}
+      
+      {showVersionHistory && (
+        <VersionHistory 
+          contractId={contractId}
+          refreshKey={refreshKey} // Pass refresh key
+          onClose={() => setShowVersionHistory(false)}
+        />
+      )}
+      
     </div>
   );
 }
