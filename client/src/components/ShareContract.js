@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 function ShareContract({ contractId, onShare }) {
   const [username, setUsername] = useState('');
+  const [role, setRole] = useState('viewer');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -22,7 +23,7 @@ function ShareContract({ contractId, onShare }) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ username: username.trim() })
+        body: JSON.stringify({ username: username.trim(), role })
       });
 
       const data = await res.json();
@@ -30,6 +31,7 @@ function ShareContract({ contractId, onShare }) {
       if (res.ok) {
         setMessage(data.message);
         setUsername('');
+        setRole('viewer');
         if (onShare) onShare();
       } else {
         setError(data.error);
@@ -59,6 +61,19 @@ function ShareContract({ contractId, onShare }) {
             style={{ width: '100%', padding: '0.5rem' }}
             disabled={loading}
           />
+        </div>
+        <div style={{ marginBottom: '1rem' }}>
+          <label style={{ marginRight: '0.5rem' }}>Role:</label>
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            disabled={loading}
+            style={{ padding: '0.5rem' }}
+          >
+            <option value="viewer">Viewer</option>
+            <option value="editor">Editor</option>
+            <option value="owner">Owner</option>
+          </select>
         </div>
         <button 
           type="submit" 

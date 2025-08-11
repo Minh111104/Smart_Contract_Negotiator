@@ -35,11 +35,21 @@ const io = new Server(server, {
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
 
-  socket.on('join-room', ({ roomId, username, userId }) => {
+  socket.on('join-room', async ({ roomId, username, userId }) => {
     socket.join(roomId);
     socket.roomId = roomId;
     socket.username = username;
-    socket.userId = userId;
+    // Ensure we have a valid userId, fallback to lookup by username
+    if (userId) {
+      socket.userId = userId;
+    } else if (username) {
+      try {
+        const u = await User.findOne({ username }).select('_id');
+        if (u) socket.userId = u._id.toString();
+      } catch (e) {
+        // ignore
+      }
+    }
     console.log(`Socket ${socket.id} (${username}) joined room ${roomId}`);
     
     // Notify others in the room
@@ -47,16 +57,28 @@ io.on('connection', (socket) => {
   });
 
   socket.on('send-changes', async ({ roomId, delta }) => {
-    // Broadcast to other users in the room
-    socket.to(roomId).emit('receive-changes', delta);
-    
     // Update the contract in the database
     try {
       const contract = await Contract.findById(roomId);
       if (contract) {
-        contract.content = delta;
-        contract.lastEdited = new Date();
-        await contract.save();
+        // Enforce role-based permissions: only owner/editor can edit
+        const participant = Array.isArray(contract.participants)
+          ? contract.participants.find(p => {
+              const pUser = p.user || p; // support legacy ObjectId arrays
+              return pUser?.toString() === (socket.userId || '').toString();
+            })
+          : null;
+        const role = participant && participant.role ? participant.role : (participant ? 'editor' : null);
+        if (role === 'owner' || role === 'editor') {
+          contract.content = delta;
+          contract.lastEdited = new Date();
+          await contract.save();
+          // Broadcast to other users in the room only if edit was allowed
+          socket.to(roomId).emit('receive-changes', delta);
+        } else {
+          // If viewer or not a participant, ignore persistence
+          return;
+        }
         
         // Create a new version every 10 changes (you can adjust this threshold)
         if (contract.currentVersion % 10 === 0) {
@@ -65,9 +87,9 @@ io.on('connection', (socket) => {
             version: contract.currentVersion + 1,
             content: delta,
             title: contract.title,
-            createdBy: socket.userId || 'unknown',
+            createdBy: socket.userId || '000000000000000000000000',
             changeDescription: 'Auto-saved version',
-            participants: contract.participants
+            participants: (contract.participants || []).map(p => p.user ? p.user : p)
           });
           await newVersion.save();
           
@@ -179,11 +201,11 @@ app.post('/api/login', async (req, res) => {
 // --- Contract routes (protected) ---
 app.post('/api/contracts', authMiddleware, async (req, res) => {
   try {
-    const { title, content, participants } = req.body;
-    const contract = new Contract({ 
-      title, 
-      content: content || '', 
-      participants: participants || [req.user._id] 
+    const { title, content } = req.body;
+    const contract = new Contract({
+      title,
+      content: content || '',
+      participants: [{ user: req.user._id, role: 'owner' }]
     });
     await contract.save();
     res.status(201).json(contract);
@@ -195,8 +217,11 @@ app.post('/api/contracts', authMiddleware, async (req, res) => {
 app.get('/api/contracts', authMiddleware, async (req, res) => {
   try {
     const contracts = await Contract.find({
-      participants: req.user._id
-    }).populate('participants', 'username');
+      $or: [
+        { participants: req.user._id }, // legacy
+        { 'participants.user': req.user._id } // new structure
+      ]
+    }).populate({ path: 'participants.user', select: 'username' });
     res.json(contracts);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -206,15 +231,18 @@ app.get('/api/contracts', authMiddleware, async (req, res) => {
 app.get('/api/contracts/:id', authMiddleware, async (req, res) => {
   try {
     const contract = await Contract.findById(req.params.id)
-      .populate('participants', 'username');
+      .populate({ path: 'participants.user', select: 'username' });
     
     if (!contract) {
       return res.status(404).json({ error: 'Contract not found' });
     }
     
-    // Check if user is a participant - handle both ObjectId and populated User objects
+    // Check if user is a participant - support both legacy and new structure
     const isParticipant = contract.participants.some(p => {
-      const participantId = p._id ? p._id.toString() : p.toString();
+      if (p?.user) {
+        return p.user.toString() === req.user._id.toString();
+      }
+      const participantId = p?._id ? p._id.toString() : p?.toString();
       return participantId === req.user._id.toString();
     });
     
@@ -230,24 +258,33 @@ app.get('/api/contracts/:id', authMiddleware, async (req, res) => {
 
 app.put('/api/contracts/:id', authMiddleware, async (req, res) => {
   try {
-    const { content } = req.body;
+    const { content, title } = req.body;
     const contract = await Contract.findById(req.params.id);
     
     if (!contract) {
       return res.status(404).json({ error: 'Contract not found' });
     }
     
-    // Check if user is a participant - handle both ObjectId and populated User objects
-    const isParticipant = contract.participants.some(p => {
-      const participantId = p._id ? p._id.toString() : p.toString();
-      return participantId === req.user._id.toString();
+    // Determine role for current user
+    const participantEntry = contract.participants.find(p => {
+      if (p?.user) return p.user.toString() === req.user._id.toString();
+      const id = p?._id ? p._id.toString() : p?.toString();
+      return id === req.user._id.toString();
     });
-    
-    if (!isParticipant) {
+    if (!participantEntry) {
       return res.status(403).json({ error: 'Access denied' });
     }
-    
-    contract.content = content;
+    const role = participantEntry.role || 'editor'; // legacy participants treated as editor
+    // Only owner/editor can modify content/title
+    if (!(role === 'owner' || role === 'editor')) {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+    if (typeof content === 'string') {
+      contract.content = content;
+    }
+    if (typeof title === 'string') {
+      contract.title = title;
+    }
     contract.lastEdited = new Date();
     await contract.save();
     
@@ -260,21 +297,22 @@ app.put('/api/contracts/:id', authMiddleware, async (req, res) => {
 // Share contract with another user
 app.post('/api/contracts/:id/share', authMiddleware, async (req, res) => {
   try {
-    const { username } = req.body;
+    const { username, role } = req.body;
     const contract = await Contract.findById(req.params.id);
     
     if (!contract) {
       return res.status(404).json({ error: 'Contract not found' });
     }
     
-    // Check if user is a participant
-    const isParticipant = contract.participants.some(p => {
-      const participantId = p._id ? p._id.toString() : p.toString();
-      return participantId === req.user._id.toString();
+    // Only owner can share or change roles
+    const me = contract.participants.find(p => {
+      if (p?.user) return p.user.toString() === req.user._id.toString();
+      const id = p?._id ? p._id.toString() : p?.toString();
+      return id === req.user._id.toString();
     });
-    
-    if (!isParticipant) {
-      return res.status(403).json({ error: 'Access denied' });
+    const myRole = me?.role || 'editor';
+    if (myRole !== 'owner') {
+      return res.status(403).json({ error: 'Only the owner can share or change roles' });
     }
     
     // Find the user to share with
@@ -283,16 +321,25 @@ app.post('/api/contracts/:id/share', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    // Check if user is already a participant
-    if (contract.participants.some(p => p.toString() === userToShare._id.toString())) {
-      return res.status(400).json({ error: 'User is already a participant' });
+    // Normalize desired role
+    const desiredRole = ['owner', 'editor', 'viewer'].includes((role || '').toLowerCase())
+      ? role.toLowerCase()
+      : 'viewer';
+
+    // If already participant, update role; else add
+    const existingIdx = contract.participants.findIndex(p => {
+      if (p?.user) return p.user.toString() === userToShare._id.toString();
+      const id = p?._id ? p._id.toString() : p?.toString();
+      return id === userToShare._id.toString();
+    });
+    if (existingIdx >= 0) {
+      contract.participants[existingIdx] = { user: userToShare._id, role: desiredRole };
+    } else {
+      contract.participants.push({ user: userToShare._id, role: desiredRole });
     }
-    
-    // Add user to participants
-    contract.participants.push(userToShare._id);
     await contract.save();
     
-    res.json({ message: `Contract shared with ${username}` });
+    res.json({ message: `Contract shared with ${username} as ${desiredRole}` });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -307,14 +354,15 @@ app.delete('/api/contracts/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Contract not found' });
     }
     
-    // Check if user is a participant
-    const isParticipant = contract.participants.some(p => {
-      const participantId = p._id ? p._id.toString() : p.toString();
-      return participantId === req.user._id.toString();
+    // Only owner can delete
+    const me = contract.participants.find(p => {
+      if (p?.user) return p.user.toString() === req.user._id.toString();
+      const id = p?._id ? p._id.toString() : p?.toString();
+      return id === req.user._id.toString();
     });
-    
-    if (!isParticipant) {
-      return res.status(403).json({ error: 'Access denied' });
+    const myRole = me?.role || 'editor';
+    if (myRole !== 'owner') {
+      return res.status(403).json({ error: 'Only the owner can delete this contract' });
     }
     
     // Delete the contract
@@ -335,9 +383,10 @@ app.get('/api/contracts/:id/versions', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Contract not found' });
     }
     
-    // Check if user is a participant
+    // Any participant (owner/editor/viewer) can view versions
     const isParticipant = contract.participants.some(p => {
-      const participantId = p._id ? p._id.toString() : p.toString();
+      if (p?.user) return p.user.toString() === req.user._id.toString();
+      const participantId = p?._id ? p._id.toString() : p?.toString();
       return participantId === req.user._id.toString();
     });
     
@@ -366,14 +415,15 @@ app.post('/api/contracts/:id/versions', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Contract not found' });
     }
     
-    // Check if user is a participant
-    const isParticipant = contract.participants.some(p => {
-      const participantId = p._id ? p._id.toString() : p.toString();
-      return participantId === req.user._id.toString();
+    // Only owner/editor can create versions
+    const me = contract.participants.find(p => {
+      if (p?.user) return p.user.toString() === req.user._id.toString();
+      const id = p?._id ? p._id.toString() : p?.toString();
+      return id === req.user._id.toString();
     });
-    
-    if (!isParticipant) {
-      return res.status(403).json({ error: 'Access denied' });
+    const myRole = me?.role || 'editor';
+    if (!(myRole === 'owner' || myRole === 'editor')) {
+      return res.status(403).json({ error: 'Insufficient permissions' });
     }
     
     // Ensure currentVersion exists, default to 1 if not
@@ -387,7 +437,7 @@ app.post('/api/contracts/:id/versions', authMiddleware, async (req, res) => {
       title: title || contract.title,
       createdBy: req.user._id,
       changeDescription: changeDescription || 'Auto-saved version',
-      participants: contract.participants
+      participants: (contract.participants || []).map(p => p.user ? p.user : p)
     });
     
     await newVersion.save();
