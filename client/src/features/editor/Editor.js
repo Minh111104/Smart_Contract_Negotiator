@@ -64,7 +64,9 @@ function Editor() {
     fetchContract();
     
     // Join socket room with username
-    socket.emit('join-room', { roomId: contractId, username: user.username, userId: user._id });
+    if (user && user.username && user._id) {
+      socket.emit('join-room', { roomId: contractId, username: user.username, userId: user._id });
+    }
 
     // Store socket and room info globally for cursor tracking
     window.socket = socket;

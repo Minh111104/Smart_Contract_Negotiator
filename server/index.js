@@ -230,6 +230,9 @@ app.get('/api/contracts', authMiddleware, async (req, res) => {
 
 app.get('/api/contracts/:id', authMiddleware, async (req, res) => {
   try {
+    console.log('Contract access request for:', req.params.id);
+    console.log('User requesting access:', { _id: req.user._id, username: req.user.username });
+    
     const contract = await Contract.findById(req.params.id)
       .populate({ path: 'participants.user', select: 'username' });
     
@@ -240,7 +243,16 @@ app.get('/api/contracts/:id', authMiddleware, async (req, res) => {
     // Check if user is a participant - support both legacy and new structure
     const isParticipant = contract.participants.some(p => {
       if (p?.user) {
-        return p.user.toString() === req.user._id.toString();
+        // Handle populated user object (when using .populate())
+        let participantUserId;
+        if (typeof p.user === 'object' && p.user._id) {
+          // User is populated, extract the _id
+          participantUserId = p.user._id.toString();
+        } else {
+          // User is just the ObjectId
+          participantUserId = p.user.toString();
+        }
+        return participantUserId === req.user._id.toString();
       }
       const participantId = p?._id ? p._id.toString() : p?.toString();
       return participantId === req.user._id.toString();
