@@ -3,6 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { exportContractToPDF, exportContractAsText } from '../../utils/pdfExport';
 import TemplateSelector from '../../components/TemplateSelector';
+import Button from '../../components/Button';
+import Card from '../../components/Card';
+import Input from '../../components/Input';
+import Alert from '../../components/Alert';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 function Dashboard() {
   const [contracts, setContracts] = useState([]);
@@ -241,224 +246,281 @@ function Dashboard() {
     return <div>Please log in to access the dashboard.</div>;
   }
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <LoadingSpinner size="lg" text="Loading your contracts..." />
+      </div>
+    );
+  }
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1>Dashboard</h1>
-        <div>
-          <span>Welcome, {user.username || 'User'}!</span>
-          <button onClick={handleLogout} style={{ marginLeft: '1rem' }}>Logout</button>
-        </div>
-      </div>
-
-      <div style={{ marginBottom: '2rem', display: 'flex', gap: '1rem' }}>
-        <button onClick={() => createNewContract()} style={{ marginRight: '1rem' }}>
-          Create New Contract
-        </button>
-        <button 
-          onClick={() => setShowTemplates(!showTemplates)}
-          style={{ 
-            backgroundColor: '#17a2b8', 
-            color: 'white', 
-            border: 'none', 
-            padding: '0.5rem 1rem',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          {showTemplates ? 'Hide Templates' : 'Use Template'}
-        </button>
-      </div>
-
-      {showTemplates && (
-        <TemplateSelector 
-          onSelectTemplate={handleTemplateSelect}
-          onClose={() => setShowTemplates(false)}
-        />
-      )}
-
-      {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
-
-      {/* Search and Filter Section */}
-      <div style={{ marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem' }}>
-          <div style={{ flex: 1, position: 'relative' }}>
-            <input
-              type="text"
-              placeholder="Search contracts by title or content..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                paddingRight: searchTerm ? '2.5rem' : '0.5rem',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                fontSize: '14px'
-              }}
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm('')}
-                style={{
-                  position: 'absolute',
-                  right: '0.5rem',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  fontSize: '18px',
-                  cursor: 'pointer',
-                  color: '#666'
-                }}
-                title="Clear search"
-              >
-                ×
-              </button>
-            )}
-          </div>
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            style={{
-              padding: '0.5rem',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              fontSize: '14px'
-            }}
-          >
-            <option value="all">All Categories</option>
-            <option value="legal">Legal</option>
-            <option value="business">Business</option>
-            <option value="employment">Employment</option>
-            <option value="nda">NDA</option>
-          </select>
-        </div>
-        
-        {searchTerm && (
-          <div style={{ fontSize: '14px', color: '#666' }}>
-            Found {filteredContracts.length} contract{filteredContracts.length !== 1 ? 's' : ''} 
-            {searchTerm && ` matching "${searchTerm}"`}
-          </div>
-        )}
-      </div>
-
-      {/* Bulk Operations Section */}
-      {filteredContracts.length > 0 && (
-        <div style={{ marginBottom: '2rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={selectAll}
-                onChange={(e) => setSelectAll(e.target.checked)}
-                style={{ cursor: 'pointer' }}
-              />
-              <span style={{ fontWeight: '500' }}>Select All ({filteredContracts.length})</span>
-            </label>
-            
-            {selectedContracts.length > 0 && (
-              <div style={{ display: 'flex', gap: '0.5rem', marginLeft: 'auto' }}>
-                <span style={{ fontSize: '14px', color: '#666', alignSelf: 'center' }}>
-                  {selectedContracts.length} selected
-                </span>
-                <button
-                  onClick={handleBulkExport}
-                  style={{
-                    backgroundColor: '#28a745',
-                    color: 'white',
-                    border: 'none',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '14px'
-                  }}
-                >
-                  Export Selected
-                </button>
-                <button
-                  onClick={handleBulkDelete}
-                  style={{
-                    backgroundColor: '#dc3545',
-                    color: 'white',
-                    border: 'none',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '14px'
-                  }}
-                >
-                  Delete Selected
-                </button>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b border-gray-200">
+        <div className="container py-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+              <p className="text-gray-600 mt-1">Manage your contracts and collaborate with your team</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="text-sm text-gray-500">Welcome back,</p>
+                <p className="font-medium text-gray-900">{user.username || 'User'}</p>
               </div>
-            )}
+              <Button variant="secondary" onClick={handleLogout}>
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
-      )}
+      </div>
 
-      <h2>Your Contracts</h2>
-      {filteredContracts.length === 0 ? (
-        <p>
-          {contracts.length === 0 
-            ? 'No contracts yet. Create your first one!' 
-            : searchTerm 
-              ? `No contracts found matching "${searchTerm}"` 
-              : 'No contracts in this category'
-          }
-        </p>
-      ) : (
-        <div>
-          {filteredContracts.map(contract => (
-            <div key={contract._id} style={{ border: '1px solid #ccc', padding: '1rem', marginBottom: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+      <div className="container py-8">
+
+        {/* Action Buttons */}
+        <div className="flex gap-4 mb-8">
+          <Button onClick={() => createNewContract()} size="lg">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Create New Contract
+          </Button>
+          <Button 
+            variant="secondary" 
+            onClick={() => setShowTemplates(!showTemplates)}
+            size="lg"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            {showTemplates ? 'Hide Templates' : 'Use Template'}
+          </Button>
+        </div>
+
+        {showTemplates && (
+          <TemplateSelector 
+            onSelectTemplate={handleTemplateSelect}
+            onClose={() => setShowTemplates(false)}
+          />
+        )}
+
+        {error && (
+          <Alert type="error" className="mb-6">
+            {error}
+          </Alert>
+        )}
+
+        {/* Search and Filter Section */}
+        <Card className="mb-8">
+          <div className="flex gap-4 items-end">
+            <div className="flex-1">
+              <Input
+                label="Search Contracts"
+                placeholder="Search by title or content..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                rightIcon={
+                  searchTerm ? (
+                    <button
+                      onClick={() => setSearchTerm('')}
+                      className="text-gray-400 hover:text-gray-600"
+                      title="Clear search"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  ) : (
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  )
+                }
+              />
+            </div>
+            <div className="w-48">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Category
+              </label>
+              <select
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+                className="input"
+              >
+                <option value="all">All Categories</option>
+                <option value="legal">Legal</option>
+                <option value="business">Business</option>
+                <option value="employment">Employment</option>
+                <option value="nda">NDA</option>
+              </select>
+            </div>
+          </div>
+          
+          {searchTerm && (
+            <div className="mt-4 text-sm text-gray-600">
+              Found {filteredContracts.length} contract{filteredContracts.length !== 1 ? 's' : ''} 
+              {searchTerm && ` matching "${searchTerm}"`}
+            </div>
+          )}
+        </Card>
+
+        {/* Bulk Operations Section */}
+        {filteredContracts.length > 0 && (
+          <Card className="mb-8 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={selectedContracts.includes(contract._id)}
-                  onChange={() => handleSelectContract(contract._id)}
-                  style={{ cursor: 'pointer', marginTop: '0.25rem' }}
+                  checked={selectAll}
+                  onChange={(e) => setSelectAll(e.target.checked)}
+                  className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
                 />
-                <div style={{ flex: 1 }}>
-                  <h3>{contract.title}</h3>
-                  <p>Last edited: {new Date(contract.lastEdited).toLocaleDateString()}</p>
-                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                    <button onClick={() => navigate(`/editor/${contract._id}`)}>
-                      Open Editor
-                    </button>
-                    <button 
-                      onClick={() => handleExportContract(contract)}
-                      style={{ 
-                        backgroundColor: '#28a745', 
-                        color: 'white', 
-                        border: 'none', 
-                        padding: '0.5rem 1rem',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Export
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteContract(contract._id, contract.title)}
-                      style={{ 
-                        backgroundColor: '#dc3545', 
-                        color: 'white', 
-                        border: 'none', 
-                        padding: '0.5rem 1rem',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </div>
+                <span className="font-medium text-gray-700">
+                  Select All ({filteredContracts.length})
+                </span>
+              </label>
+              
+              {selectedContracts.length > 0 && (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-600">
+                    {selectedContracts.length} selected
+                  </span>
+                  <Button
+                    variant="success"
+                    size="sm"
+                    onClick={handleBulkExport}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Export Selected
+                  </Button>
+                  <Button
+                    variant="error"
+                    size="sm"
+                    onClick={handleBulkDelete}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete Selected
+                  </Button>
                 </div>
-              </div>
+              )}
             </div>
-          ))}
+          </Card>
+        )}
+
+        {/* Contracts Section */}
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Contracts</h2>
+          
+          {filteredContracts.length === 0 ? (
+            <Card className="text-center py-12">
+              <div className="flex flex-col items-center">
+                <svg className="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  {contracts.length === 0 
+                    ? 'No contracts yet' 
+                    : searchTerm 
+                      ? 'No contracts found' 
+                      : 'No contracts in this category'
+                  }
+                </h3>
+                <p className="text-gray-500 mb-6">
+                  {contracts.length === 0 
+                    ? 'Create your first contract to get started!' 
+                    : searchTerm 
+                      ? `No contracts match "${searchTerm}"` 
+                      : 'Try selecting a different category'
+                  }
+                </p>
+                {contracts.length === 0 && (
+                  <Button onClick={() => createNewContract()}>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Create Your First Contract
+                  </Button>
+                )}
+              </div>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {filteredContracts.map(contract => (
+                <Card key={contract._id} hover className="transition-all duration-200">
+                  <div className="flex items-start gap-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedContracts.includes(contract._id)}
+                      onChange={() => handleSelectContract(contract._id)}
+                      className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-1"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2 truncate">
+                            {contract.title}
+                          </h3>
+                          <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                            <div className="flex items-center gap-1">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              Last edited: {new Date(contract.lastEdited).toLocaleDateString()}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                              </svg>
+                              {contract.participants?.length || 0} participant{(contract.participants?.length || 0) !== 1 ? 's' : ''}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => navigate(`/editor/${contract._id}`)}
+                          size="sm"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          Open Editor
+                        </Button>
+                        <Button
+                          variant="success"
+                          size="sm"
+                          onClick={() => handleExportContract(contract)}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          Export
+                        </Button>
+                        <Button
+                          variant="error"
+                          size="sm"
+                          onClick={() => handleDeleteContract(contract._id, contract.title)}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
