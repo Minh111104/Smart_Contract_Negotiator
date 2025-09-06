@@ -8,11 +8,15 @@ import UserPresence from '../../components/UserPresence';
 import useDebounce from '../../hooks/useDebounce';
 import ShareContract from '../../components/ShareContract';
 import ExportOptions from '../../components/ExportOptions';
-
 import TypingIndicator from '../../components/TypingIndicator';
 import AIClauseSuggestions from '../../components/AIClauseSuggestions';
 import RichTextEditor from '../../components/RichTextEditor';
 import VersionHistory from '../../components/VersionHistory';
+import Button from '../../components/Button';
+import Card from '../../components/Card';
+import Input from '../../components/Input';
+import Alert from '../../components/Alert';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 function Editor() {
   const dispatch = useDispatch();
@@ -235,158 +239,236 @@ function Editor() {
     }
   };
 
-  if (loading) return <div>Loading contract...</div>;
-  if (error) return <div style={{ color: 'red' }}>{error}</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <LoadingSpinner size="lg" text="Loading contract..." />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="max-w-md">
+          <Alert type="error" title="Error Loading Contract">
+            {error}
+          </Alert>
+          <div className="mt-4 flex gap-2">
+            <Button onClick={() => navigate('/dashboard')}>
+              Back to Dashboard
+            </Button>
+            <Button variant="secondary" onClick={() => window.location.reload()}>
+              Retry
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ padding: '2rem' }}>
+    <div className="min-h-screen bg-gray-50">
       <UserPresence users={activeUsers} />
       <TypingIndicator activeUsers={activeUsers} currentUser={user} />
       
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <h1>Contract Editor</h1>
-          <input
-            type="text"
-            value={contractData.title}
-            onChange={(e) => setContractData(prev => ({ ...prev, title: e.target.value }))}
-            onBlur={handleSaveTitle}
-            style={{
-              fontSize: '1.5rem',
-              fontWeight: 'bold',
-              border: 'none',
-              borderBottom: '2px solid #e2e8f0',
-              padding: '0.5rem',
-              backgroundColor: 'transparent',
-              outline: 'none'
-            }}
-            placeholder="Contract Title"
-          />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div style={{ 
-            fontSize: '12px', 
-            color: saveStatus === 'saved' ? '#28a745' : saveStatus === 'saving' ? '#ffc107' : '#dc3545' 
-          }}>
-            {saveStatus === 'saved' && '✓ Saved'}
-            {saveStatus === 'saving' && '⏳ Saving...'}
-            {saveStatus === 'error' && '✗ Save failed'}
+      {/* Header */}
+      <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
+        <div className="container py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-4 flex-1 min-w-0">
+              <Button
+                variant="secondary"
+                onClick={() => navigate('/dashboard')}
+                size="sm"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back
+              </Button>
+              
+              <div className="flex-1 min-w-0">
+                <Input
+                  value={contractData.title}
+                  onChange={(e) => setContractData(prev => ({ ...prev, title: e.target.value }))}
+                  onBlur={handleSaveTitle}
+                  placeholder="Contract Title"
+                  className="text-2xl font-bold border-none bg-transparent p-0 focus:ring-0 focus:border-b-2 focus:border-primary"
+                />
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              {/* Save Status */}
+              <div className="flex items-center gap-2 text-sm">
+                {saveStatus === 'saved' && (
+                  <div className="flex items-center gap-1 text-success">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    Saved
+                  </div>
+                )}
+                {saveStatus === 'saving' && (
+                  <div className="flex items-center gap-1 text-warning">
+                    <div className="spinner w-4 h-4"></div>
+                    Saving...
+                  </div>
+                )}
+                {saveStatus === 'error' && (
+                  <div className="flex items-center gap-1 text-error">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                    Save failed
+                  </div>
+                )}
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleSave}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                  </svg>
+                  Save
+                </Button>
+                
+                <Button
+                  variant={showShare ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() => setShowShare(!showShare)}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                  </svg>
+                  Share
+                </Button>
+                
+                <Button
+                  variant={showAISuggestions ? 'primary' : 'warning'}
+                  size="sm"
+                  onClick={() => setShowAISuggestions(!showAISuggestions)}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                  AI
+                </Button>
+                
+                <Button
+                  variant="success"
+                  size="sm"
+                  onClick={() => setShowExport(!showExport)}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Export
+                </Button>
+                
+                <Button
+                  variant="info"
+                  size="sm"
+                  onClick={() => setShowVersionHistory(!showVersionHistory)}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  History
+                </Button>
+                
+                <Button
+                  variant="info"
+                  size="sm"
+                  onClick={handleCreateVersion}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Version
+                </Button>
+                
+                <Button
+                  variant="error"
+                  size="sm"
+                  onClick={handleDeleteContract}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Delete
+                </Button>
+              </div>
+            </div>
           </div>
-          <button onClick={handleSave} style={{ marginRight: '1rem' }}>Save</button>
-          <button onClick={() => setShowShare(!showShare)} style={{ marginRight: '1rem' }}>
-            {showShare ? 'Hide Share' : 'Share'}
-          </button>
-          <button 
-            onClick={() => setShowAISuggestions(!showAISuggestions)}
-            style={{ 
-              marginRight: '1rem',
-              backgroundColor: '#ffc107', 
-              color: 'black', 
-              border: 'none', 
-              padding: '0.5rem 1rem',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            {showAISuggestions ? 'Hide AI' : 'AI Suggestions'}
-          </button>
-          <button 
-            onClick={() => setShowExport(!showExport)}
-            style={{ 
-              marginRight: '1rem',
-              backgroundColor: '#28a745', 
-              color: 'white', 
-              border: 'none', 
-              padding: '0.5rem 1rem',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Export
-          </button>
-          <button 
-            onClick={() => setShowVersionHistory(!showVersionHistory)}
-            style={{ 
-              marginRight: '1rem',
-              backgroundColor: '#6f42c1', 
-              color: 'white', 
-              border: 'none', 
-              padding: '0.5rem 1rem',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Version History
-          </button>
-          <button 
-            onClick={handleCreateVersion}
-            style={{ 
-              marginRight: '1rem',
-              backgroundColor: '#17a2b8', 
-              color: 'white', 
-              border: 'none', 
-              padding: '0.5rem 1rem',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Create Version
-          </button>
-          <button 
-            onClick={handleDeleteContract}
-            style={{ 
-              marginRight: '1rem',
-              backgroundColor: '#dc3545', 
-              color: 'white', 
-              border: 'none', 
-              padding: '0.5rem 1rem',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Delete
-          </button>
-          <button onClick={() => navigate('/dashboard')}>Back to Dashboard</button>
         </div>
       </div>
       
-      <div style={{ position: 'relative' }}>
-        <RichTextEditor
-          value={content}
-          onChange={handleChange}
-          placeholder="Start typing your contract..."
-        />
+      {/* Main Editor Area */}
+      <div className="container py-4 md:py-6">
+        <Card className="min-h-[400px] md:min-h-[600px]">
+          <div className="relative h-full">
+            <RichTextEditor
+              value={content}
+              onChange={handleChange}
+              placeholder="Start typing your contract..."
+            />
+          </div>
+        </Card>
       </div>
       
+      {/* Modals */}
       {showShare && (
-        <ShareContract 
-          contractId={contractId} 
-          onShare={() => setShowShare(false)}
-        />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <Card className="max-w-md w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+            <ShareContract 
+              contractId={contractId} 
+              onShare={() => setShowShare(false)}
+            />
+          </Card>
+        </div>
       )}
       
       {showAISuggestions && (
-        <AIClauseSuggestions 
-          currentContent={content}
-          onInsertClause={handleInsertClause}
-        />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <Card className="max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+            <AIClauseSuggestions 
+              currentContent={content}
+              onInsertClause={handleInsertClause}
+            />
+          </Card>
+        </div>
       )}
       
       {showExport && (
-        <ExportOptions 
-          contractTitle={contractData.title}
-          contractContent={content}
-          participants={contractData.participants}
-          onClose={() => setShowExport(false)}
-        />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <Card className="max-w-md w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+            <ExportOptions 
+              contractTitle={contractData.title}
+              contractContent={content}
+              participants={contractData.participants}
+              onClose={() => setShowExport(false)}
+            />
+          </Card>
+        </div>
       )}
       
       {showVersionHistory && (
-        <VersionHistory 
-          contractId={contractId}
-          refreshKey={refreshKey} // Pass refresh key
-          onClose={() => setShowVersionHistory(false)}
-        />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <Card className="max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+            <VersionHistory 
+              contractId={contractId}
+              refreshKey={refreshKey}
+              onClose={() => setShowVersionHistory(false)}
+            />
+          </Card>
+        </div>
       )}
       
     </div>
