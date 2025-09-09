@@ -1,43 +1,57 @@
 import React, { useState } from 'react';
-
-// Mock AI suggestions - in a real app, this would call an AI API
-const mockSuggestions = {
-  'confidentiality': [
-    'The Receiving Party shall maintain the confidentiality of all proprietary information disclosed by the Disclosing Party.',
-    'Confidential information shall be protected using industry-standard security measures.',
-    'The confidentiality obligations shall survive termination of this agreement for a period of [NUMBER] years.'
-  ],
-  'termination': [
-    'Either party may terminate this agreement with [NUMBER] days written notice.',
-    'This agreement may be terminated immediately for material breach.',
-    'Upon termination, all rights and obligations shall cease except for those that survive termination.'
-  ],
-  'liability': [
-    'Neither party shall be liable for any indirect, incidental, or consequential damages.',
-    'The total liability of either party shall not exceed the amount paid under this agreement.',
-    'This limitation of liability shall not apply to claims arising from gross negligence or willful misconduct.'
-  ],
-  'intellectual property': [
-    'All intellectual property created during the course of this agreement shall belong to [PARTY NAME].',
-    'Each party retains ownership of their pre-existing intellectual property.',
-    'Any improvements or modifications to existing IP shall be jointly owned.'
-  ],
-  'payment': [
-    'Payment shall be due within [NUMBER] days of receipt of invoice.',
-    'Late payments shall incur interest at the rate of [PERCENTAGE]% per month.',
-    'All payments shall be made in [CURRENCY] by bank transfer to the designated account.'
-  ]
-};
+import { useAuth } from '../contexts/AuthContext';
+import LoadingSpinner from './LoadingSpinner';
 
 function AIClauseSuggestions({ currentContent, onInsertClause }) {
+  const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const categories = Object.keys(mockSuggestions);
+  const categories = [
+    'confidentiality',
+    'termination', 
+    'liability',
+    'intellectual property',
+    'payment',
+    'force majeure',
+    'governing law',
+    'warranties'
+  ];
 
-  const handleCategorySelect = (category) => {
+  const handleCategorySelect = async (category) => {
     setSelectedCategory(category);
     setShowSuggestions(true);
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/ai/suggestions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
+        },
+        body: JSON.stringify({
+          category: category,
+          context: currentContent
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSuggestions(data.suggestions || []);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to get suggestions');
+      }
+    } catch (err) {
+      setError('Network error. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInsertClause = (clause) => {
@@ -106,8 +120,20 @@ function AIClauseSuggestions({ currentContent, onInsertClause }) {
             </button>
           </div>
           
-          <div style={{ display: 'grid', gap: '0.5rem' }}>
-            {mockSuggestions[selectedCategory].map((clause, index) => (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-center">
+                <LoadingSpinner size="lg" />
+                <p className="mt-2 text-sm text-gray-600">Generating AI suggestions...</p>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="p-4 bg-red-50 border border-red-200 rounded text-sm text-red-800">
+              {error}
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gap: '0.5rem' }}>
+              {suggestions.map((clause, index) => (
               <div
                 key={index}
                 style={{
@@ -144,8 +170,9 @@ function AIClauseSuggestions({ currentContent, onInsertClause }) {
                   Insert Clause
                 </button>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

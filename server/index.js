@@ -10,6 +10,7 @@ const User = require('./models/User');
 const Contract = require('./models/Contract');
 const ContractVersion = require('./models/ContractVersion');
 const authMiddleware = require('./middleware/auth');
+const aiService = require('./services/aiService');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key_change_in_production';
 
@@ -496,6 +497,98 @@ app.get('/api/contracts/:id/versions/:versionId', authMiddleware, async (req, re
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// --- AI API Routes ---
+// Get AI clause suggestions
+app.post('/api/ai/suggestions', authMiddleware, async (req, res) => {
+  try {
+    const { category, context } = req.body;
+    
+    if (!category) {
+      return res.status(400).json({ error: 'Category is required' });
+    }
+
+    const suggestions = await aiService.generateClauseSuggestions(category, context);
+    res.json({ suggestions, category });
+  } catch (err) {
+    console.error('AI Suggestions Error:', err);
+    res.status(500).json({ error: 'Failed to generate suggestions' });
+  }
+});
+
+// Analyze contract with AI
+app.post('/api/ai/analyze', authMiddleware, async (req, res) => {
+  try {
+    const { content, analysisType } = req.body;
+    
+    if (!content) {
+      return res.status(400).json({ error: 'Contract content is required' });
+    }
+
+    const analysis = await aiService.analyzeContract(content, analysisType || 'general');
+    res.json({ analysis, analysisType: analysisType || 'general' });
+  } catch (err) {
+    console.error('AI Analysis Error:', err);
+    res.status(500).json({ error: 'Failed to analyze contract' });
+  }
+});
+
+// Chat with AI assistant
+app.post('/api/ai/chat', authMiddleware, async (req, res) => {
+  try {
+    const { message, contractId } = req.body;
+    
+    if (!message) {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+
+    let contractContext = '';
+    if (contractId) {
+      try {
+        const contract = await Contract.findById(contractId);
+        if (contract) {
+          contractContext = contract.content || '';
+        }
+      } catch (err) {
+        // Continue without context if contract not found
+        console.log('Contract not found for context:', err.message);
+      }
+    }
+
+    const response = await aiService.chatWithAI(message, contractContext);
+    res.json({ response, message });
+  } catch (err) {
+    console.error('AI Chat Error:', err);
+    res.status(500).json({ error: 'Failed to process chat message' });
+  }
+});
+
+// Generate smart contract template
+app.post('/api/ai/template', authMiddleware, async (req, res) => {
+  try {
+    const { contractType, requirements } = req.body;
+    
+    if (!contractType) {
+      return res.status(400).json({ error: 'Contract type is required' });
+    }
+
+    const template = await aiService.generateSmartTemplate(contractType, requirements || {});
+    res.json({ template, contractType, requirements });
+  } catch (err) {
+    console.error('AI Template Error:', err);
+    res.status(500).json({ error: 'Failed to generate template' });
+  }
+});
+
+// Get AI service status
+app.get('/api/ai/status', authMiddleware, (req, res) => {
+  res.json({ 
+    configured: aiService.isConfigured,
+    message: aiService.isConfigured 
+      ? 'AI service is configured and ready' 
+      : 'AI service is using mock responses. Configure OPENAI_API_KEY for full functionality.'
+  });
 });
 
 // Start server

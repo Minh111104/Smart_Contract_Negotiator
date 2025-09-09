@@ -10,6 +10,9 @@ import ShareContract from '../../components/ShareContract';
 import ExportOptions from '../../components/ExportOptions';
 import TypingIndicator from '../../components/TypingIndicator';
 import AIClauseSuggestions from '../../components/AIClauseSuggestions';
+import AIChatbot from '../../components/AIChatbot';
+import AIContractAnalysis from '../../components/AIContractAnalysis';
+import AISmartTemplates from '../../components/AISmartTemplates';
 import RichTextEditor from '../../components/RichTextEditor';
 import VersionHistory from '../../components/VersionHistory';
 import Button from '../../components/Button';
@@ -31,6 +34,9 @@ function Editor() {
   const [showShare, setShowShare] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [showAISuggestions, setShowAISuggestions] = useState(false);
+  const [showAIChatbot, setShowAIChatbot] = useState(false);
+  const [showAIAnalysis, setShowAIAnalysis] = useState(false);
+  const [showAITemplates, setShowAITemplates] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0); // Add refresh key for version history
   const [contractData, setContractData] = useState({ title: '', participants: [] });
@@ -354,11 +360,48 @@ function Editor() {
                   variant={showAISuggestions ? 'primary' : 'warning'}
                   size="sm"
                   onClick={() => setShowAISuggestions(!showAISuggestions)}
+                  title="AI Clause Suggestions"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                   </svg>
                   AI
+                </Button>
+                
+                <Button
+                  variant={showAIChatbot ? 'primary' : 'info'}
+                  size="sm"
+                  onClick={() => setShowAIChatbot(!showAIChatbot)}
+                  title="AI Chat Assistant"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  Chat
+                </Button>
+                
+                <Button
+                  variant={showAIAnalysis ? 'primary' : 'success'}
+                  size="sm"
+                  onClick={() => setShowAIAnalysis(!showAIAnalysis)}
+                  title="AI Contract Analysis"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Analyze
+                </Button>
+                
+                <Button
+                  variant={showAITemplates ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() => setShowAITemplates(!showAITemplates)}
+                  title="AI Smart Templates"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Templates
                 </Button>
                 
                 <Button
@@ -441,6 +484,44 @@ function Editor() {
             <AIClauseSuggestions 
               currentContent={content}
               onInsertClause={handleInsertClause}
+            />
+          </Card>
+        </div>
+      )}
+      
+      {showAIChatbot && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <Card className="max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden">
+            <AIChatbot 
+              contractId={contractId}
+              onClose={() => setShowAIChatbot(false)}
+            />
+          </Card>
+        </div>
+      )}
+      
+      {showAIAnalysis && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <Card className="max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden">
+            <AIContractAnalysis 
+              contractContent={content}
+              onClose={() => setShowAIAnalysis(false)}
+            />
+          </Card>
+        </div>
+      )}
+      
+      {showAITemplates && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <Card className="max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden">
+            <AISmartTemplates 
+              onClose={() => setShowAITemplates(false)}
+              onUseTemplate={(template) => {
+                const newContent = content + (content ? '<br><br>' : '') + template;
+                dispatch(setContent(newContent));
+                socket.emit('send-changes', { roomId: contractId, delta: newContent });
+                setShowAITemplates(false);
+              }}
             />
           </Card>
         </div>
