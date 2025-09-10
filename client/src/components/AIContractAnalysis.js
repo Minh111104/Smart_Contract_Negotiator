@@ -74,16 +74,15 @@ function AIContractAnalysis({ contractContent, onClose }) {
             <p className="text-xs text-gray-500">Get AI-powered insights about your contract</p>
           </div>
         </div>
-        <Button
-          variant="secondary"
-          size="sm"
+        <button
           onClick={onClose}
           title="Close analysis"
+          className="btn btn-secondary btn-sm"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
-        </Button>
+        </button>
       </div>
 
       {/* Analysis Type Selection */}
@@ -110,10 +109,10 @@ function AIContractAnalysis({ contractContent, onClose }) {
       {/* Analysis Controls */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center gap-3">
-          <Button
+          <button
             onClick={analyzeContract}
             disabled={isLoading || !contractContent.trim()}
-            className="flex items-center gap-2"
+            className="btn btn-primary flex items-center gap-2"
           >
             {isLoading ? (
               <>
@@ -128,19 +127,18 @@ function AIContractAnalysis({ contractContent, onClose }) {
                 Analyze Contract
               </>
             )}
-          </Button>
+          </button>
           
           {analysis && (
-            <Button
-              variant="secondary"
+            <button
               onClick={copyAnalysis}
-              className="flex items-center gap-2"
+              className="btn btn-secondary flex items-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
               Copy Analysis
-            </Button>
+            </button>
           )}
         </div>
         

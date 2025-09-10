@@ -86,16 +86,15 @@ function AISmartTemplates({ onClose, onUseTemplate }) {
             <p className="text-xs text-gray-500">Generate AI-powered contract templates</p>
           </div>
         </div>
-        <Button
-          variant="secondary"
-          size="sm"
+        <button
           onClick={onClose}
           title="Close templates"
+          className="btn btn-secondary btn-sm"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
-        </Button>
+        </button>
       </div>
 
       {/* Contract Type Selection */}
@@ -134,10 +133,10 @@ function AISmartTemplates({ onClose, onUseTemplate }) {
 
       {/* Generate Button */}
       <div className="p-4 border-b border-gray-200">
-        <Button
+        <button
           onClick={generateTemplate}
           disabled={isLoading || !selectedType}
-          className="flex items-center gap-2"
+          className="btn btn-primary flex items-center gap-2"
         >
           {isLoading ? (
             <>
@@ -152,7 +151,7 @@ function AISmartTemplates({ onClose, onUseTemplate }) {
               Generate Template
             </>
           )}
-        </Button>
+        </button>
         
         {error && (
           <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-800">
@@ -177,27 +176,24 @@ function AISmartTemplates({ onClose, onUseTemplate }) {
                 Generated {contractTypes.find(t => t.value === selectedType)?.label} Template
               </h4>
               <div className="flex items-center gap-2">
-                <Button
-                  variant="secondary"
-                  size="sm"
+                <button
                   onClick={copyTemplate}
-                  className="flex items-center gap-1"
+                  className="btn btn-secondary btn-sm flex items-center gap-1"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
                   Copy
-                </Button>
-                <Button
+                </button>
+                <button
                   onClick={useTemplate}
-                  size="sm"
-                  className="flex items-center gap-1"
+                  className="btn btn-primary btn-sm flex items-center gap-1"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                   Use Template
-                </Button>
+                </button>
               </div>
             </div>
             

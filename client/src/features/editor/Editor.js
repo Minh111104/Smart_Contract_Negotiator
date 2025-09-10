@@ -490,30 +490,30 @@ function Editor() {
       )}
       
       {showAIChatbot && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-          <Card className="max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="max-w-6xl w-full h-[85vh] overflow-hidden bg-white rounded-lg shadow-xl flex flex-col">
             <AIChatbot 
               contractId={contractId}
               onClose={() => setShowAIChatbot(false)}
             />
-          </Card>
+          </div>
         </div>
       )}
       
       {showAIAnalysis && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-          <Card className="max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden">
+          <div className="max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden bg-white rounded-lg shadow-xl">
             <AIContractAnalysis 
               contractContent={content}
               onClose={() => setShowAIAnalysis(false)}
             />
-          </Card>
+          </div>
         </div>
       )}
       
       {showAITemplates && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-          <Card className="max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden">
+          <div className="max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-hidden bg-white rounded-lg shadow-xl">
             <AISmartTemplates 
               onClose={() => setShowAITemplates(false)}
               onUseTemplate={(template) => {
@@ -523,7 +523,7 @@ function Editor() {
                 setShowAITemplates(false);
               }}
             />
-          </Card>
+          </div>
         </div>
       )}
       
