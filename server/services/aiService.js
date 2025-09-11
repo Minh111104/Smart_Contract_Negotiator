@@ -1,8 +1,9 @@
 const OpenAI = require('openai');
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 
 // Initialize OpenAI client
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || 'your-openai-api-key-here'
+  apiKey: process.env.OPENAI_API_KEY || 'OPENAI_API_KEY'
 });
 
 class AIService {
