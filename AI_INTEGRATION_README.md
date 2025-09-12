@@ -81,7 +81,7 @@ OPENAI_API_KEY=your_openai_api_key_here
 ```bash
 # Start the server
 cd server
-npm start
+node index.js
 
 # Start the client (in another terminal)
 cd client
