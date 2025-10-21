@@ -8,6 +8,7 @@ import Card from '../../components/Card';
 import Input from '../../components/Input';
 import Alert from '../../components/Alert';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import styles from './Dashboard.module.css';
 
 function Dashboard() {
   const [contracts, setContracts] = useState([]);
@@ -248,55 +249,113 @@ function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading your contracts..." />
+      <div className={styles.loadingContainer}>
+        <div className={styles.loadingContent}>
+          <div className={styles.spinner}></div>
+          <p className={styles.loadingText}>Loading your contracts...</p>
+        </div>
       </div>
     );
   }
 
+  const totalContracts = contracts.length;
+  const activeContracts = contracts.filter(c => c.status === 'active').length;
+  const draftContracts = contracts.filter(c => !c.status || c.status === 'draft').length;
+  const recentContracts = contracts.filter(c => {
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return new Date(c.lastEdited) > weekAgo;
+  }).length;
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={styles.dashboard}>
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="container py-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-              <p className="text-gray-600 mt-1">Manage your contracts and collaborate with your team</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <p className="text-sm text-gray-500">Welcome back,</p>
-                <p className="font-medium text-gray-900">{user.username || 'User'}</p>
+      <div className={styles.header}>
+        <div className="container py-8">
+          <div className={styles.headerContent}>
+            <div className="flex justify-between items-center flex-wrap gap-4">
+              <div>
+                <h1 className={styles.headerTitle}>Smart Contract Dashboard</h1>
+                <p className={styles.headerSubtitle}>Manage, collaborate, and negotiate contracts seamlessly</p>
               </div>
-              <Button variant="secondary" onClick={handleLogout}>
-                Logout
-              </Button>
+              <div className={styles.userInfo}>
+                <div className={styles.userAvatar}>
+                  {(user.username || 'U').charAt(0).toUpperCase()}
+                </div>
+                <div className="text-right">
+                  <p className={styles.userName}>Welcome back,</p>
+                  <p className={styles.userEmail}>{user.username || 'User'}</p>
+                </div>
+                <Button variant="secondary" onClick={handleLogout}>
+                  Logout
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       <div className="container py-8">
+        {/* Statistics Cards */}
+        <div className={styles.statsGrid}>
+          <div className={`${styles.statCard} ${styles.primary}`}>
+            <div className={`${styles.statIcon} ${styles.primary}`}>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div className={styles.statValue}>{totalContracts}</div>
+            <div className={styles.statLabel}>Total Contracts</div>
+          </div>
+
+          <div className={`${styles.statCard} ${styles.success}`}>
+            <div className={`${styles.statIcon} ${styles.success}`}>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className={styles.statValue}>{activeContracts}</div>
+            <div className={styles.statLabel}>Active Contracts</div>
+          </div>
+
+          <div className={`${styles.statCard} ${styles.warning}`}>
+            <div className={`${styles.statIcon} ${styles.warning}`}>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </div>
+            <div className={styles.statValue}>{draftContracts}</div>
+            <div className={styles.statLabel}>Draft Contracts</div>
+          </div>
+
+          <div className={`${styles.statCard} ${styles.info}`}>
+            <div className={`${styles.statIcon} ${styles.info}`}>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className={styles.statValue}>{recentContracts}</div>
+            <div className={styles.statLabel}>Recent (7 days)</div>
+          </div>
+        </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-4 mb-8">
-          <Button onClick={() => createNewContract()} size="lg">
+        <div className={styles.actionSection}>
+          <button onClick={() => createNewContract()} className={`${styles.actionButton} ${styles.primary}`}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             Create New Contract
-          </Button>
-          <Button 
-            variant="secondary" 
+          </button>
+          <button 
+            className={`${styles.actionButton} ${styles.secondary}`}
             onClick={() => setShowTemplates(!showTemplates)}
-            size="lg"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             {showTemplates ? 'Hide Templates' : 'Use Template'}
-          </Button>
+          </button>
         </div>
 
         {showTemplates && (
@@ -313,41 +372,46 @@ function Dashboard() {
         )}
 
         {/* Search and Filter Section */}
-        <Card className="mb-8">
-          <div className="flex gap-4 items-end">
-            <div className="flex-1">
-              <Input
-                label="Search Contracts"
-                placeholder="Search by title or content..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                rightIcon={
-                  searchTerm ? (
-                    <button
-                      onClick={() => setSearchTerm('')}
-                      className="text-gray-400 hover:text-gray-600"
-                      title="Clear search"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  ) : (
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        <div className={styles.searchFilterCard}>
+          <div className="flex gap-4 items-end flex-wrap">
+            <div className="flex-1" style={{minWidth: '250px'}}>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Search Contracts
+              </label>
+              <div className={styles.searchWrapper}>
+                <div className={styles.searchIcon}>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  className={styles.searchInput}
+                  placeholder="Search by title or content..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className={styles.clearButton}
+                    title="Clear search"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                  )
-                }
-              />
+                  </button>
+                )}
+              </div>
             </div>
-            <div className="w-48">
+            <div style={{minWidth: '200px'}}>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Category
               </label>
               <select
                 value={filterCategory}
                 onChange={(e) => setFilterCategory(e.target.value)}
-                className="input"
+                className={styles.filterSelect}
               >
                 <option value="all">All Categories</option>
                 <option value="legal">Legal</option>
@@ -359,32 +423,31 @@ function Dashboard() {
           </div>
           
           {searchTerm && (
-            <div className="mt-4 text-sm text-gray-600">
+            <div className={styles.searchResults}>
               Found {filteredContracts.length} contract{filteredContracts.length !== 1 ? 's' : ''} 
               {searchTerm && ` matching "${searchTerm}"`}
             </div>
           )}
-        </Card>
+        </div>
 
         {/* Bulk Operations Section */}
         {filteredContracts.length > 0 && (
-          <Card className="mb-8 bg-gray-50">
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-3 cursor-pointer">
+          <div className={styles.bulkOpsCard}>
+            <div className={styles.bulkOpsContent}>
+              <label className={styles.bulkSelectLabel}>
                 <input
                   type="checkbox"
                   checked={selectAll}
                   onChange={(e) => setSelectAll(e.target.checked)}
-                  className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
                 />
-                <span className="font-medium text-gray-700">
+                <span>
                   Select All ({filteredContracts.length})
                 </span>
               </label>
               
               {selectedContracts.length > 0 && (
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-600">
+                <div className={styles.bulkActions}>
+                  <span className={styles.selectedCount}>
                     {selectedContracts.length} selected
                   </span>
                   <Button
@@ -410,116 +473,122 @@ function Dashboard() {
                 </div>
               )}
             </div>
-          </Card>
+          </div>
         )}
 
         {/* Contracts Section */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Contracts</h2>
+        <div className={styles.contractsSection}>
+          <h2 className={styles.sectionTitle}>Your Contracts</h2>
           
           {filteredContracts.length === 0 ? (
-            <Card className="text-center py-12">
-              <div className="flex flex-col items-center">
-                <svg className="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  {contracts.length === 0 
-                    ? 'No contracts yet' 
-                    : searchTerm 
-                      ? 'No contracts found' 
-                      : 'No contracts in this category'
-                  }
-                </h3>
-                <p className="text-gray-500 mb-6">
-                  {contracts.length === 0 
-                    ? 'Create your first contract to get started!' 
-                    : searchTerm 
-                      ? `No contracts match "${searchTerm}"` 
-                      : 'Try selecting a different category'
-                  }
-                </p>
-                {contracts.length === 0 && (
-                  <Button onClick={() => createNewContract()}>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Create Your First Contract
-                  </Button>
-                )}
-              </div>
-            </Card>
+            <div className={styles.emptyState}>
+              <svg className={styles.emptyIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <h3 className={styles.emptyTitle}>
+                {contracts.length === 0 
+                  ? 'No contracts yet' 
+                  : searchTerm 
+                    ? 'No contracts found' 
+                    : 'No contracts in this category'
+                }
+              </h3>
+              <p className={styles.emptyDescription}>
+                {contracts.length === 0 
+                  ? 'Create your first contract to get started!' 
+                  : searchTerm 
+                    ? `No contracts match "${searchTerm}"` 
+                    : 'Try selecting a different category'
+                }
+              </p>
+              {contracts.length === 0 && (
+                <button onClick={() => createNewContract()} className={`${styles.actionButton} ${styles.primary}`}>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Create Your First Contract
+                </button>
+              )}
+            </div>
           ) : (
-            <div className="grid gap-4">
+            <div className={styles.contractsGrid}>
               {filteredContracts.map(contract => (
-                <Card key={contract._id} hover className="transition-all duration-200">
-                  <div className="flex items-start gap-4">
+                <div key={contract._id} className={styles.contractCard}>
+                  <div className={styles.contractHeader}>
                     <input
                       type="checkbox"
                       checked={selectedContracts.includes(contract._id)}
                       onChange={() => handleSelectContract(contract._id)}
-                      className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-1"
+                      className={styles.contractCheckbox}
                     />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2 truncate">
-                            {contract.title}
-                          </h3>
-                          <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-                            <div className="flex items-center gap-1">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              Last edited: {new Date(contract.lastEdited).toLocaleDateString()}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                              </svg>
-                              {contract.participants?.length || 0} participant{(contract.participants?.length || 0) !== 1 ? 's' : ''}
-                            </div>
-                          </div>
+                    <div className={styles.contractInfo}>
+                      <h3 className={styles.contractTitle}>
+                        {contract.title}
+                      </h3>
+                      <div className={styles.contractMeta}>
+                        <div className={styles.metaItem}>
+                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          {new Date(contract.lastEdited).toLocaleDateString()}
                         </div>
+                        <div className={styles.metaItem}>
+                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                          </svg>
+                          {contract.participants?.length || 0} participant{(contract.participants?.length || 0) !== 1 ? 's' : ''}
+                        </div>
+                        <span className={`${styles.statusBadge} ${styles[contract.status || 'draft']}`}>
+                          {contract.status || 'draft'}
+                        </span>
                       </div>
-                      <div className="flex gap-2">
-                        <Button
+                      <div className={styles.contractActions}>
+                        <button
                           onClick={() => navigate(`/editor/${contract._id}`)}
-                          size="sm"
+                          className={`${styles.actionBtn} ${styles.edit}`}
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                           </svg>
-                          Open Editor
-                        </Button>
-                        <Button
-                          variant="success"
-                          size="sm"
+                          Edit
+                        </button>
+                        <button
                           onClick={() => handleExportContract(contract)}
+                          className={`${styles.actionBtn} ${styles.export}`}
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
                           Export
-                        </Button>
-                        <Button
-                          variant="error"
-                          size="sm"
+                        </button>
+                        <button
                           onClick={() => handleDeleteContract(contract._id, contract.title)}
+                          className={`${styles.actionBtn} ${styles.delete}`}
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
                           Delete
-                        </Button>
+                        </button>
                       </div>
                     </div>
                   </div>
-                </Card>
+                </div>
               ))}
             </div>
           )}
         </div>
+
+        {/* Floating Action Button */}
+        <button
+          onClick={() => createNewContract()}
+          className={styles.fab}
+          title="Create new contract"
+        >
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
       </div>
     </div>
   );
