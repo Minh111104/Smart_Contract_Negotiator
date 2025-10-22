@@ -11,8 +11,7 @@ const Contract = require('./models/Contract');
 const ContractVersion = require('./models/ContractVersion');
 const authMiddleware = require('./middleware/auth');
 const aiService = require('./services/aiService');
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key_change_in_production';
+const JWT_SECRET = require('./config/jwt');
 
 // MongoDB connection
 mongoose.connect('mongodb://localhost:27017/contractdb');
