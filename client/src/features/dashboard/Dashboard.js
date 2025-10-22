@@ -117,10 +117,17 @@ function Dashboard() {
         navigate(`/editor/${newContract._id}`);
       } else {
         const errorData = await res.json();
-        setError(`Failed to create contract: ${errorData.error || 'Unknown error'}`);
+        
+        // If invalid token, prompt user to re-login
+        if (res.status === 401) {
+          setError('Your session has expired. Please logout and login again.');
+        } else {
+          setError(`Failed to create contract: ${errorData.error || 'Unknown error'}`);
+        }
       }
     } catch (err) {
-      setError('Failed to create contract');
+      console.error('Create contract error:', err);
+      setError('Failed to create contract. Please check if the server is running.');
     }
   };
 
